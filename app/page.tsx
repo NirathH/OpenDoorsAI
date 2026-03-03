@@ -1,117 +1,310 @@
 import Image from "next/image";
-import { Play, TrendingUp, Book, MessageSquare, Eye, Award } from 'lucide-react';
-import Header from "../components/Header";
-import ActionCircle from "../components/ActionCircle";
-import FeedbackCard from "../components/FeedbackCard";
-import GoalCard from "../components/GoalCard";
+import Link from "next/link";
+import { Play, Sparkles, MessageSquare, TrendingUp, ShieldCheck, Clock, CheckCircle2 } from "lucide-react";
 
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="min-h-screen flex flex-col font-sans">
-      <Header />
+    <div className="min-h-screen bg-brand-light text-gray-900">
+      <LandingNav />
 
-      <main className="flex-1 max-w-[1400px] w-full mx-auto p-6 md:p-8 flex flex-col lg:flex-row gap-8">
-
-        {/* Left Column - Main Content */}
-        <div className="flex-1 flex flex-col gap-8">
-
-          {/* Welcome Card */}
-          <div className="bg-white rounded-[2rem] p-10 border-2 border-[#b4e0d4] shadow-sm flex flex-col items-center justify-center">
-            <div className="w-36 h-36 rounded-full border-[6px] border-brand-primary overflow-hidden mb-6 relative shadow-lg">
-              <div className="w-full h-full bg-brand-light flex items-center justify-center text-brand-primary font-bold text-5xl">
-                A
-              </div>
+      {/* HERO */}
+      <section className="max-w-[1400px] mx-auto px-6 md:px-8 pt-12 pb-10">
+        <div className="grid lg:grid-cols-2 gap-10 items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border-2 border-brand-muted bg-white text-sm font-semibold text-gray-700">
+              <Sparkles size={16} className="text-brand-primary" />
+              AI practice that feels like a real session
             </div>
-            <h1 className="text-3xl font-semibold text-gray-900 mb-3">Welcome back, Alex!</h1>
-            <p className="text-gray-500 font-medium">You're on a 3-day streak!</p>
+
+            <h1 className="mt-5 text-4xl md:text-5xl font-extrabold tracking-tight">
+              Practice interviews and communication{" "}
+              <span className="text-brand-primary">without pressure</span>.
+            </h1>
+
+            <p className="mt-4 text-lg text-gray-600 font-medium leading-relaxed max-w-xl">
+              OpenDoorsAI helps you practice speaking, get instant feedback, track progress, and improve confidence —
+              with coach-style guidance and clear next steps.
+            </p>
+
+            <div className="mt-7 flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/register"
+                className="inline-flex items-center justify-center gap-2 bg-brand-secondary hover:bg-brand-primary text-white font-semibold py-4 px-6 rounded-xl transition-colors shadow-md"
+              >
+                <Play size={18} />
+                Start Free Practice
+              </Link>
+
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center gap-2 bg-white border-2 border-brand-muted hover:border-brand-primary text-gray-900 font-semibold py-4 px-6 rounded-xl transition-colors"
+              >
+                Log in
+              </Link>
+            </div>
+
+            <div className="mt-6 flex flex-wrap gap-3">
+              <MiniBadge icon={<ShieldCheck size={16} />} text="Private recordings" />
+              <MiniBadge icon={<Clock size={16} />} text="Fast feedback" />
+              <MiniBadge icon={<TrendingUp size={16} />} text="Progress tracking" />
+            </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap justify-center items-center gap-6 py-6">
-            <ActionCircle icon={TrendingUp} label="Review Progress" variant="secondary" />
-            <ActionCircle icon={Play} label="Start Session" variant="primary" size="lg" />
-            <ActionCircle icon={Book} label="Skill Modules" variant="secondary" />
-          </div>
+          {/* HERO CARD */}
+          <div className="relative">
+            <div className="absolute -top-10 -right-10 h-48 w-48 rounded-full bg-white/70 border-2 border-brand-muted blur-[0px]" />
+            <div className="absolute -bottom-12 -left-10 h-64 w-64 rounded-full bg-white/60 border-2 border-brand-muted" />
 
-          {/* Bottom Area: Progress & Goals */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+            <div className="relative bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-8 overflow-hidden">
+              <div className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-brand-light border-2 border-brand-muted opacity-80" />
 
-            {/* My Progress */}
-            <div className="bg-white rounded-[2rem] p-6 border-2 border-[#b4e0d4] flex flex-col">
-              <h2 className="text-[15px] font-medium text-gray-700 mb-4 px-2">My Progress</h2>
-              <div className="flex gap-4 flex-1">
-                <div className="flex-1 border-2 border-[#b4e0d4] rounded-2xl p-5 flex flex-col items-start justify-center">
-                  <div className="text-brand-secondary mb-3 bg-brand-light p-2 rounded-xl">
-                    <TrendingUp size={24} strokeWidth={2.5} />
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-600 font-semibold mb-1">Sessions Completed</div>
-                    <div className="text-3xl font-bold text-gray-900 leading-none">5</div>
-                  </div>
+              <div className="relative flex items-center gap-4">
+                <div className="h-14 w-14 rounded-2xl border-2 border-brand-muted bg-brand-light flex items-center justify-center">
+                  <span className="text-brand-primary font-extrabold">OD</span>
                 </div>
-                <div className="flex-1 border-2 border-[#b4e0d4] rounded-2xl p-5 flex flex-col items-start justify-center">
-                  <div className="text-brand-secondary mb-3 bg-brand-light p-2 rounded-xl">
-                    <Award size={24} strokeWidth={2.5} />
-                  </div>
-                  <div>
-                    <div className="text-xs text-gray-600 font-semibold mb-1">Last Score</div>
-                    <div className="text-3xl font-bold text-gray-900 leading-none">85<span className="text-sm text-gray-500 font-bold ml-1">/100</span></div>
-                  </div>
+                <div>
+                  <div className="text-lg font-extrabold">Your next session</div>
+                  <div className="text-sm text-gray-600 font-medium">“Tell me about yourself”</div>
+                </div>
+              </div>
+
+              <div className="relative mt-6 grid gap-4">
+                <StepRow
+                  icon={<MessageSquare className="text-brand-primary" size={18} />}
+                  title="Live questions"
+                  desc="You get prompts like a real interview."
+                />
+                <StepRow
+                  icon={<Sparkles className="text-brand-primary" size={18} />}
+                  title="Instant feedback"
+                  desc="Clarity, confidence, filler words, structure."
+                />
+                <StepRow
+                  icon={<TrendingUp className="text-brand-primary" size={18} />}
+                  title="Track improvement"
+                  desc="See progress over time and focus areas."
+                />
+              </div>
+
+              <div className="relative mt-7 rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5">
+                <div className="text-xs font-semibold text-gray-600 mb-1">Example feedback</div>
+                <div className="text-gray-900 font-semibold">
+                  “Great energy. Next: slow down slightly and answer with a 3-part structure.”
+                </div>
+                <div className="mt-3 flex gap-2 flex-wrap">
+                  <Tag>Confidence +2</Tag>
+                  <Tag>Filler Words</Tag>
+                  <Tag>Structure</Tag>
                 </div>
               </div>
             </div>
 
-            {/* Upcoming Goals */}
-            <div className="bg-white rounded-[2rem] p-6 border-2 border-[#b4e0d4] flex flex-col">
-              <h2 className="text-[15px] font-medium text-gray-700 mb-4 px-2">Upcoming Goals</h2>
-              <div className="flex flex-col flex-1 justify-center">
-                <GoalCard icon={MessageSquare} title="Practice: 'Tell me about yourself'" />
-                <GoalCard icon={Eye} title="Practice: Eye Contact" />
-              </div>
-            </div>
-
+            <p className="mt-4 text-sm text-gray-600 font-medium text-center">
+              Built for students, job seekers, and anyone improving communication.
+            </p>
           </div>
         </div>
+      </section>
 
-        {/* Right Column - Sidebar */}
-        <div className="w-full lg:w-[420px] bg-white rounded-[2rem] border-2 border-[#b4e0d4] p-8 flex flex-col h-fit relative shadow-sm">
-          <div className="flex items-start gap-4 mb-6 pb-6 border-b border-brand-muted">
-            <div className="bg-brand-muted p-3 rounded-2xl mt-1">
-              <MessageSquare size={24} className="text-brand-primary" />
-            </div>
-            <div className="flex flex-col gap-1">
-              <h2 className="text-gray-900 font-semibold text-[17px]">Instructor Feedback</h2>
-              <p className="text-gray-500 text-[13px] font-medium">Recent notes from your coach</p>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <FeedbackCard
-              type="positive"
-              coachName="Coach Sarah"
-              timeAgo="2 days ago"
-              message="Great improvement on eye contact! Your engagement with the camera felt much more natural in the last session."
-            />
-            <FeedbackCard
-              type="focus"
-              coachName="Coach Sarah"
-              timeAgo="3 days ago"
-              message="Let's work on reducing filler words like 'um' and 'uh'. Try pausing silently instead—it shows confidence."
-            />
-            <FeedbackCard
-              type="general"
-              coachName="Coach Sarah"
-              timeAgo="5 days ago"
-              message="Remember to take a breath before answering. This helps with pacing and gives you time to organize your thoughts."
-            />
-          </div>
-
-          <button className="mt-4 w-full bg-brand-secondary hover:bg-brand-primary text-white font-medium py-4 rounded-xl transition-colors shadow-md">
-            View All Feedback
-          </button>
+      {/* HOW IT WORKS */}
+      <section className="max-w-[1400px] mx-auto px-6 md:px-8 py-10">
+        <div className="text-center">
+          <h2 className="text-3xl font-extrabold">How it works</h2>
+          <p className="mt-2 text-gray-600 font-medium">
+            Simple flow. Real improvement.
+          </p>
         </div>
 
-      </main>
+        <div className="mt-8 grid md:grid-cols-3 gap-6">
+          <FeatureCard
+            icon={<Play size={22} className="text-brand-primary" />}
+            title="Start a session"
+            text="Pick a goal (interview, eye contact, clarity) and begin practicing."
+          />
+          <FeatureCard
+            icon={<MessageSquare size={22} className="text-brand-primary" />}
+            title="Answer prompts"
+            text="Respond to live questions like a real conversation."
+          />
+          <FeatureCard
+            icon={<TrendingUp size={22} className="text-brand-primary" />}
+            title="Get feedback + track progress"
+            text="Actionable tips, scores, and trends so you know what to fix next."
+          />
+        </div>
+      </section>
+
+      {/* FEATURES */}
+      <section className="max-w-[1400px] mx-auto px-6 md:px-8 py-10">
+        <div className="grid lg:grid-cols-2 gap-6">
+          <BigCard
+            title="Participant features"
+            points={[
+              "Practice sessions with live AI questions",
+              "Feedback summary + improvement steps",
+              "Progress dashboard (scores, trends, streaks)",
+              "Personal goals (what you want to improve)",
+            ]}
+          />
+          <BigCard
+            title="Instructor / Coach features"
+            points={[
+              "View session results and progress",
+              "Leave notes and assign practice tasks",
+              "See patterns: confidence, filler words, pacing",
+              "Support cohorts / programs (later)",
+            ]}
+          />
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="max-w-[1400px] mx-auto px-6 md:px-8 py-12">
+        <div className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-10 text-center relative overflow-hidden">
+          <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-brand-light border-2 border-brand-muted opacity-70" />
+          <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-brand-light border-2 border-brand-muted opacity-60" />
+
+          <h3 className="relative text-3xl font-extrabold">Ready to practice?</h3>
+          <p className="relative mt-2 text-gray-600 font-medium">
+            Create an account and run your first session in minutes.
+          </p>
+
+          <div className="relative mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+            <Link
+              href="/register"
+              className="inline-flex items-center justify-center gap-2 bg-brand-secondary hover:bg-brand-primary text-white font-semibold py-4 px-6 rounded-xl transition-colors shadow-md"
+            >
+              Start Free Practice
+            </Link>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center justify-center gap-2 bg-white border-2 border-brand-muted hover:border-brand-primary text-gray-900 font-semibold py-4 px-6 rounded-xl transition-colors"
+            >
+              Go to Dashboard
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
     </div>
+  );
+}
+
+function LandingNav() {
+  return (
+    <header className="sticky top-0 z-50 bg-white/85 backdrop-blur border-b-2 border-brand-muted">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-8 h-[72px] flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="relative h-11 w-11 rounded-full overflow-hidden border-2 border-brand-muted bg-white shadow-sm">
+            <Image src="/logo-submark.png" alt="OpenDoorsAI" fill className="object-contain p-1" priority />
+          </div>
+          <span className="text-[18px] font-extrabold text-brand-primary">OpenDoorsAI</span>
+        </Link>
+
+        <nav className="hidden md:flex items-center gap-2 rounded-2xl border-2 border-brand-muted bg-brand-light/50 px-2 py-2">
+          <NavLink href="#how">How it works</NavLink>
+          <NavLink href="#features">Features</NavLink>
+          <NavLink href="/login">Log in</NavLink>
+        </nav>
+
+        <div className="flex items-center gap-3">
+          <Link
+            href="/register"
+            className="bg-brand-secondary hover:bg-brand-primary text-white font-semibold px-4 py-2.5 rounded-xl shadow-md transition-colors"
+          >
+            Get Started
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return (
+    <a
+      href={href}
+      className="px-3 py-2 rounded-xl text-sm font-semibold text-gray-700 hover:text-gray-900 hover:bg-white/70 transition-colors"
+    >
+      {children}
+    </a>
+  );
+}
+
+function MiniBadge({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border-2 border-brand-muted bg-white text-xs font-semibold text-gray-700">
+      <span className="text-brand-primary">{icon}</span>
+      {text}
+    </span>
+  );
+}
+
+function Tag({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="px-3 py-1 rounded-full text-xs font-semibold border-2 border-brand-muted bg-white text-gray-700">
+      {children}
+    </span>
+  );
+}
+
+function StepRow({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-2xl border-2 border-brand-muted p-4 bg-white">
+      <div className="h-10 w-10 rounded-2xl bg-brand-light border-2 border-brand-muted flex items-center justify-center">
+        {icon}
+      </div>
+      <div>
+        <div className="font-extrabold">{title}</div>
+        <div className="text-sm text-gray-600 font-medium">{desc}</div>
+      </div>
+    </div>
+  );
+}
+
+function FeatureCard({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+  return (
+    <div className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6">
+      <div className="h-12 w-12 rounded-2xl bg-brand-light border-2 border-brand-muted flex items-center justify-center">
+        {icon}
+      </div>
+      <div className="mt-4 text-lg font-extrabold">{title}</div>
+      <div className="mt-2 text-gray-600 font-medium">{text}</div>
+    </div>
+  );
+}
+
+function BigCard({ title, points }: { title: string; points: string[] }) {
+  return (
+    <div className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-8">
+      <div className="text-xl font-extrabold">{title}</div>
+      <div className="mt-4 grid gap-3">
+        {points.map((p) => (
+          <div key={p} className="flex items-start gap-2">
+            <CheckCircle2 size={18} className="text-brand-primary mt-0.5" />
+            <div className="text-gray-700 font-medium">{p}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="border-t-2 border-brand-muted bg-white">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-8 py-10 flex flex-col md:flex-row gap-4 justify-between">
+        <div>
+          <div className="font-extrabold text-brand-primary">OpenDoorsAI</div>
+          <div className="text-sm text-gray-600 font-medium mt-1">
+            Practice. Feedback. Growth.
+          </div>
+        </div>
+        <div className="text-sm text-gray-600 font-medium">
+          © {new Date().getFullYear()} OpenDoorsAI • Built with care
+        </div>
+      </div>
+    </footer>
   );
 }
