@@ -42,7 +42,13 @@ export default function Home() {
           {/* Action Buttons */}
           <section className="flex flex-wrap justify-center items-center gap-6 py-4">
             <ActionCircle icon={TrendingUp} label="Review Progress" variant="secondary" />
-            <ActionCircle icon={Play} label="Start Session" variant="primary" size="lg" />
+            <ActionCircle
+                icon={Play}
+                label="Start Session"
+                variant="primary"
+                size="lg"
+                href="/sessions/new"
+            />
             <ActionCircle icon={Book} label="Skill Modules" variant="secondary" />
           </section>
 
