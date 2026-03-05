@@ -6,8 +6,8 @@ import { ChevronDown, LogOut, User } from "lucide-react";
 import { signOut } from "@/app/actions/auth";
 
 export default function ProfileMenu({
-  initials = "A",
-  name = "Alex",
+  initials = "N",
+  name = "Nirath",
   role = "Participant",
 }: {
   initials?: string;
