@@ -4,8 +4,16 @@ import Navbar from "@/components/Navbar";
 import ActionCircle from "@/components/ActionCircle";
 import FeedbackCard from "@/components/FeedbackCard";
 import GoalCard from "@/components/GoalCard";
+import { redirect } from "next/navigation";
+import { createSupabaseServer } from "@/lib/supabaseServer";
 
-export default function Home() {
+export default async function Home() {
+
+  const supabase = await createSupabaseServer();
+  const { data } = await supabase.auth.getUser();
+
+  if (!data.user || data.user.role === "instructor") redirect("/login");
+
   return (
     <div className="min-h-screen font-sans bg-brand-light">
       <Navbar />
@@ -24,7 +32,7 @@ export default function Home() {
             </div>
 
             <h1 className="relative text-3xl font-semibold text-gray-900 mb-2">
-              Welcome back, Alex!
+              Welcome back, {data.user.user_metadata.full_name || "name"}!
             </h1>
             <p className="relative text-gray-500 font-medium">
               You&apos;re on a{" "}

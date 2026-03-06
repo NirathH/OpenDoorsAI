@@ -45,6 +45,15 @@ export default function RegisterForm() {
         )}
 
         <div className="space-y-4">
+
+          <input
+            name="full_name"
+            type="text"
+            placeholder="Full name"
+            className="w-full rounded-2xl border-2 border-brand-muted focus:border-brand-primary outline-none px-4 py-3 transition-colors"
+            required
+          />
+
           <input
             name="email"
             type="email"
@@ -60,6 +69,16 @@ export default function RegisterForm() {
             className="w-full rounded-2xl border-2 border-brand-muted focus:border-brand-primary outline-none px-4 py-3 transition-colors"
             required
           />
+
+          <select
+            name="role"
+            className="w-full rounded-2xl border-2 border-brand-muted focus:border-brand-primary outline-none px-4 py-3 transition-colors bg-white"
+            defaultValue="participant"
+          >
+            <option value="participant">Participant</option>
+            <option value="instructor">Instructor</option>
+          </select>
+
         </div>
 
         <button className="w-full bg-brand-secondary hover:bg-brand-primary text-white font-semibold py-3 rounded-xl transition-colors shadow-md">
