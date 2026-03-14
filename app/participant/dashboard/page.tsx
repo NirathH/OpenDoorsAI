@@ -1,6 +1,13 @@
 import React from "react";
-import { Play, TrendingUp, Book, MessageSquare, Eye, Award } from "lucide-react";
-import Navbar from "@/components/Navbar";
+import {
+  Play,
+  TrendingUp,
+  Book,
+  MessageSquare,
+  Eye,
+  Award,
+} from "lucide-react";
+import Navbar from "@/components/participantNavbar";
 import ActionCircle from "@/components/ActionCircle";
 import FeedbackCard from "@/components/FeedbackCard";
 import GoalCard from "@/components/GoalCard";
@@ -9,37 +16,58 @@ import { createSupabaseServer } from "@/lib/supabaseServer";
 
 export default async function Home() {
 
+  // Create the server-side Supabase client
+  // so we can safely read the logged-in user on the server.
   const supabase = await createSupabaseServer();
+
+  // Get the currently logged-in auth user
   const { data } = await supabase.auth.getUser();
 
+  // If no user is logged in, or if the logged-in user is an instructor,
+  // redirect them away from the participant dashboard.
   if (!data.user || data.user.role === "instructor") redirect("/login");
+
+  // Grab useful user info for display and for passing into the session page
+  const userId = data.user.id;
+  const fullName = data.user.user_metadata.full_name || "name";
 
   return (
     <div className="min-h-screen font-sans bg-brand-light">
-      <Navbar />
+      <Navbar
+        userName={fullName}
+        userRole="Participant"
+      />
 
       <main className="max-w-[1400px] mx-auto p-6 md:p-8 flex flex-col lg:flex-row gap-8">
         {/* Left Column */}
         <div className="flex-1 flex flex-col gap-8">
           {/* Welcome Card */}
           <section className="bg-white rounded-[2rem] p-10 border-2 border-brand-muted shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
-            {/* subtle background accent */}
+            {/* Decorative background accents */}
             <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-brand-light border-2 border-brand-muted opacity-70" />
             <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-brand-light border-2 border-brand-muted opacity-50" />
 
+            {/* Placeholder avatar circle */}
             <div className="relative w-36 h-36 rounded-full border-[6px] border-brand-primary overflow-hidden mb-6 shadow-lg bg-brand-light flex items-center justify-center">
-              <span className="text-brand-primary font-extrabold text-5xl">A</span>
+              <span className="text-brand-primary font-extrabold text-5xl">
+                A
+              </span>
             </div>
 
+            {/* Personalized greeting */}
             <h1 className="relative text-3xl font-semibold text-gray-900 mb-2">
-              Welcome back, {data.user.user_metadata.full_name || "name"}!
+              Welcome back, {fullName}!
             </h1>
+
             <p className="relative text-gray-500 font-medium">
               You&apos;re on a{" "}
-              <span className="text-brand-primary font-semibold">3-day streak</span>{" "}
+              <span className="text-brand-primary font-semibold">
+                3-day streak
+              </span>{" "}
               🔥
             </p>
 
+            {/* Quick summary pills */}
             <div className="relative mt-6 flex flex-wrap justify-center gap-3">
               <Pill>Next task: Tell me about yourself</Pill>
               <Pill>Focus: Filler words</Pill>
@@ -49,15 +77,32 @@ export default async function Home() {
 
           {/* Action Buttons */}
           <section className="flex flex-wrap justify-center items-center gap-6 py-4">
-            <ActionCircle icon={TrendingUp} label="Review Progress" variant="secondary" />
             <ActionCircle
-                icon={Play}
-                label="Start Session"
-                variant="primary"
-                size="lg"
-                href="/sessions/new"
+              icon={TrendingUp}
+              label="Review Progress"
+              variant="secondary"
             />
-            <ActionCircle icon={Book} label="Skill Modules" variant="secondary" />
+
+            {/* 
+              Pass the logged-in participant's user id into the session page.
+              This lets the session page create the DB session using the correct participant.
+              
+              Example result:
+              /sessions/new?participantId=abc-123
+            */}
+            <ActionCircle
+              icon={Play}
+              label="Start Session"
+              variant="primary"
+              size="lg"
+              href={`/sessions/new?participantId=${userId}`}
+            />
+
+            <ActionCircle
+              icon={Book}
+              label="Skill Modules"
+              variant="secondary"
+            />
           </section>
 
           {/* Progress + Goals */}
@@ -74,14 +119,19 @@ export default async function Home() {
                   label="Last Score"
                   value={
                     <>
-                      85 <span className="text-sm text-gray-500 font-bold">/100</span>
+                      85{" "}
+                      <span className="text-sm text-gray-500 font-bold">
+                        /100
+                      </span>
                     </>
                   }
                 />
               </div>
 
               <div className="mt-4 border-2 border-brand-muted rounded-2xl p-4 bg-brand-light/40">
-                <div className="text-xs text-gray-600 font-semibold mb-1">This week</div>
+                <div className="text-xs text-gray-600 font-semibold mb-1">
+                  This week
+                </div>
                 <div className="text-sm text-gray-700 font-medium">
                   Keep the streak going — one more session to beat last week.
                 </div>
@@ -90,7 +140,10 @@ export default async function Home() {
 
             <Card title="Upcoming Goals">
               <div className="flex flex-col gap-2">
-                <GoalCard icon={MessageSquare} title="Practice: 'Tell me about yourself'" />
+                <GoalCard
+                  icon={MessageSquare}
+                  title="Practice: 'Tell me about yourself'"
+                />
                 <GoalCard icon={Eye} title="Practice: Eye Contact" />
               </div>
 
@@ -107,14 +160,18 @@ export default async function Home() {
             <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
               <MessageSquare size={24} className="text-brand-primary" />
             </div>
+
             <div className="flex flex-col gap-1">
-              <h2 className="text-gray-900 font-semibold text-[17px]">Instructor Feedback</h2>
+              <h2 className="text-gray-900 font-semibold text-[17px]">
+                Instructor Feedback
+              </h2>
               <p className="text-gray-500 text-[13px] font-medium">
                 Recent notes from your coach
               </p>
             </div>
           </div>
 
+          {/* Recent instructor feedback cards */}
           <div className="flex flex-col gap-2">
             <FeedbackCard
               type="positive"
@@ -145,15 +202,25 @@ export default async function Home() {
   );
 }
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+// Reusable card wrapper for dashboard sections
+function Card({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="bg-white rounded-[2rem] p-6 border-2 border-brand-muted flex flex-col">
-      <h2 className="text-[15px] font-medium text-gray-700 mb-4 px-2">{title}</h2>
+      <h2 className="text-[15px] font-medium text-gray-700 mb-4 px-2">
+        {title}
+      </h2>
       {children}
     </div>
   );
 }
 
+// Small dashboard stat block
 function MiniStat({
   icon,
   label,
@@ -169,13 +236,18 @@ function MiniStat({
         {icon}
       </div>
       <div>
-        <div className="text-xs text-gray-600 font-semibold mb-1">{label}</div>
-        <div className="text-3xl font-bold text-gray-900 leading-none">{value}</div>
+        <div className="text-xs text-gray-600 font-semibold mb-1">
+          {label}
+        </div>
+        <div className="text-3xl font-bold text-gray-900 leading-none">
+          {value}
+        </div>
       </div>
     </div>
   );
 }
 
+// Small pill used in the welcome card
 function Pill({ children }: { children: React.ReactNode }) {
   return (
     <span className="px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-brand-muted bg-white text-gray-700">

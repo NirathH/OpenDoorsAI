@@ -6,35 +6,44 @@ import { usePathname } from "next/navigation";
 import ProfileMenu from "@/components/ProfileMenu";
 
 const NAV_ITEMS = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Sessions", href: "/sessions" },
-  { label: "Progress", href: "/progress" },
-  { label: "Skill Modules", href: "/modules" },
-  { label: "Feedback", href: "/feedback" },
+  { label: "Dashboard", href: "/participant/dashboard" },
+  { label: "Sessions", href: "/participant/sessions" },
+  { label: "Progress", href: "/participant/progress" },
+  { label: "Skill Modules", href: "/participant/modules" },
+  { label: "Feedback", href: "/participant/feedback" },
 ];
 
 function cn(...classes: Array<string | false | undefined | null>) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function Navbar({
-  userName = "Alex",
-  userInitial = "A",
-  userRole = "Participant",
-  logoSrc = "/logo-submark.png", // put your logo in /public/logo-submark.png (or change path)
-}: {
-  userName?: string;
+type NavbarProps = {
+  userName: string;
   userInitial?: string;
   userRole?: string;
   logoSrc?: string;
-}) {
+};
+
+export default function Navbar({
+  userName,
+  userInitial,
+  userRole = "Participant",
+  logoSrc = "/logo-submark.png",
+}: NavbarProps) {
   const pathname = usePathname();
+
+  // Fallback initial if one is not passed in
+  const safeInitial =
+    userInitial || userName?.trim()?.charAt(0)?.toUpperCase() || "U";
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b-2 border-brand-muted">
       <div className="max-w-[1400px] mx-auto px-6 md:px-8 h-[72px] flex items-center justify-between gap-4">
         {/* Left: Logo */}
-        <Link href="/dashboard" className="flex items-center gap-3">
+        <Link
+          href="/participant/dashboard"
+          className="flex items-center gap-3"
+        >
           <div className="relative h-11 w-11 rounded-full overflow-hidden border-2 border-brand-muted bg-white shadow-sm">
             <Image
               src={logoSrc}
@@ -72,15 +81,17 @@ export default function Navbar({
           })}
         </nav>
 
-        {/* Right: Role + Profile menu */}
+        {/* Right: Role + Profile */}
         <div className="flex items-center gap-3">
-          {/* Optional role pill */}
           <span className="hidden md:inline-flex px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-brand-muted bg-white text-gray-700">
             {userRole}
           </span>
 
-          {/* Dropdown menu (Profile + Logout) */}
-          <ProfileMenu initials={userInitial} name={userName} role={userRole} />
+          <ProfileMenu
+            initials={safeInitial}
+            name={userName}
+            role={userRole}
+          />
         </div>
       </div>
 
