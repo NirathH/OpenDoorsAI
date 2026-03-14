@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+
 import React from "react";
 import {
   Play,
@@ -16,28 +17,24 @@ import { redirect } from "next/navigation";
 import { createSupabaseServer } from "@/lib/supabaseServer";
 
 export default async function Home() {
-
-  // Create the server-side Supabase client
-  // so we can safely read the logged-in user on the server.
+  // Create the server-side Supabase client inside the page request
   const supabase = await createSupabaseServer();
 
   // Get the currently logged-in auth user
   const { data } = await supabase.auth.getUser();
 
-  // If no user is logged in, or if the logged-in user is an instructor,
-  // redirect them away from the participant dashboard.
-  if (!data.user || data.user.role === "instructor") redirect("/login");
+  // Protect the participant dashboard
+  if (!data.user || data.user.role === "instructor") {
+    redirect("/login");
+  }
 
-  // Grab useful user info for display and for passing into the session page
+  // Useful logged-in user info
   const userId = data.user.id;
-  const fullName = data.user.user_metadata.full_name || "name";
+  const fullName = data.user.user_metadata?.full_name || "User";
 
   return (
     <div className="min-h-screen font-sans bg-brand-light">
-      <Navbar
-        userName={fullName}
-        userRole="Participant"
-      />
+      <Navbar userName={fullName} userRole="Participant" />
 
       <main className="max-w-[1400px] mx-auto p-6 md:p-8 flex flex-col lg:flex-row gap-8">
         {/* Left Column */}
@@ -51,7 +48,7 @@ export default async function Home() {
             {/* Placeholder avatar circle */}
             <div className="relative w-36 h-36 rounded-full border-[6px] border-brand-primary overflow-hidden mb-6 shadow-lg bg-brand-light flex items-center justify-center">
               <span className="text-brand-primary font-extrabold text-5xl">
-                A
+                {fullName.charAt(0).toUpperCase()}
               </span>
             </div>
 
@@ -82,27 +79,23 @@ export default async function Home() {
               icon={TrendingUp}
               label="Review Progress"
               variant="secondary"
+              href="/participant/progress"
             />
 
-            {/* 
-              Pass the logged-in participant's user id into the session page.
-              This lets the session page create the DB session using the correct participant.
-              
-              Example result:
-              /sessions/new?participantId=abc-123
-            */}
+            {/* Start a new participant session and pass the logged-in participant id */}
             <ActionCircle
               icon={Play}
               label="Start Session"
               variant="primary"
               size="lg"
-              href={`/sessions/new?participantId=${userId}`}
+              href={`/participant/sessions/new?participantId=${userId}`}
             />
 
             <ActionCircle
               icon={Book}
               label="Skill Modules"
               variant="secondary"
+              href="/participant/modules"
             />
           </section>
 
@@ -203,7 +196,6 @@ export default async function Home() {
   );
 }
 
-// Reusable card wrapper for dashboard sections
 function Card({
   title,
   children,
@@ -221,7 +213,6 @@ function Card({
   );
 }
 
-// Small dashboard stat block
 function MiniStat({
   icon,
   label,
@@ -248,7 +239,6 @@ function MiniStat({
   );
 }
 
-// Small pill used in the welcome card
 function Pill({ children }: { children: React.ReactNode }) {
   return (
     <span className="px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-brand-muted bg-white text-gray-700">

@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
@@ -12,8 +13,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/participantNavbar";
 import { createSupabaseServer } from "@/lib/supabaseServer";
-const supabase = await createSupabaseServer();
-const { data } = await supabase.auth.getUser();
 
 type PageProps = {
   params: Promise<{
@@ -46,6 +45,7 @@ export default async function ParticipantSessionDetailsPage({
 }: PageProps) {
   const { sessionId } = await params;
 
+  // Create Supabase client INSIDE the request-scoped page function
   const supabase = await createSupabaseServer();
   const { data: authData } = await supabase.auth.getUser();
 
@@ -53,6 +53,7 @@ export default async function ParticipantSessionDetailsPage({
   if (authData.user.role === "instructor") redirect("/login");
 
   const userId = authData.user.id;
+  const fullName = authData.user.user_metadata?.full_name || "User";
 
   // Load session
   const { data: session, error: sessionError } = await supabase
@@ -113,14 +114,10 @@ export default async function ParticipantSessionDetailsPage({
       }
     }
   }
-  const fullName = data.user?.user_metadata?.full_name || "User";
-  
+
   return (
     <div className="min-h-screen bg-brand-light font-sans">
-      <Navbar
-        userName={fullName}
-        userRole="Participant"
-      />
+      <Navbar userName={fullName} userRole="Participant" />
 
       <main className="max-w-[1000px] mx-auto p-6 md:p-8">
         <div className="mb-8 flex flex-col gap-4">
@@ -143,7 +140,6 @@ export default async function ParticipantSessionDetailsPage({
         </div>
 
         <div className="grid grid-cols-1 gap-8">
-          {/* Session Info */}
           <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
@@ -178,7 +174,6 @@ export default async function ParticipantSessionDetailsPage({
             </div>
           </section>
 
-          {/* Transcript */}
           <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
@@ -200,7 +195,6 @@ export default async function ParticipantSessionDetailsPage({
             )}
           </section>
 
-          {/* Feedback */}
           <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
