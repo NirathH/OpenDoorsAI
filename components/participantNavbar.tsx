@@ -1,5 +1,7 @@
 "use client";
+
 export const dynamic = "force-dynamic";
+
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -18,7 +20,7 @@ function cn(...classes: Array<string | false | undefined | null>) {
 }
 
 type NavbarProps = {
-  userName: string;
+  userName?: string;
   userInitial?: string;
   userRole?: string;
   logoSrc?: string;
@@ -32,9 +34,8 @@ export default function Navbar({
 }: NavbarProps) {
   const pathname = usePathname();
 
-  // Fallback initial if one is not passed in
-  const safeInitial =
-    userInitial || userName?.trim()?.charAt(0)?.toUpperCase() || "U";
+  const cleanName = userName?.trim() || "";
+  const safeInitial = userInitial || cleanName.charAt(0).toUpperCase() || "?";
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b-2 border-brand-muted">
@@ -53,6 +54,7 @@ export default function Navbar({
               priority
             />
           </div>
+
           <span className="text-[18px] font-extrabold text-brand-primary">
             OpenDoorsAI
           </span>
@@ -89,7 +91,7 @@ export default function Navbar({
 
           <ProfileMenu
             initials={safeInitial}
-            name={userName}
+            name={cleanName}
             role={userRole}
           />
         </div>

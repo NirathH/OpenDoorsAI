@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -11,9 +12,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/participantNavbar";
 import { createSupabaseServer } from "@/lib/supabaseServer";
-import { supabase } from "@/lib/supabaseClient";
-const { data } = await supabase.auth.getUser();
-const fullName = data.user?.user_metadata?.full_name || "User";
 
 type Assignment = {
   id: string;
@@ -59,15 +57,26 @@ export default async function ParticipantSessionsPage() {
 
   const userId = authData.user.id;
 
-  // Assignments that still need attention
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const fullName =
+    profile?.full_name?.trim() ||
+    authData.user.user_metadata?.full_name?.trim() ||
+    "";
+
   const { data: assignedData, error: assignedError } = await supabase
     .from("session_assignments")
-    .select("id, title, goal, instructions, max_minutes, status, due_at, created_at")
+    .select(
+      "id, title, goal, instructions, max_minutes, status, due_at, created_at"
+    )
     .eq("participant_id", userId)
     .in("status", ["assigned", "in_progress"])
     .order("created_at", { ascending: false });
 
-  // Completed actual sessions
   const { data: completedData, error: completedError } = await supabase
     .from("sessions")
     .select(
@@ -90,10 +99,8 @@ export default async function ParticipantSessionsPage() {
 
   return (
     <div className="min-h-screen bg-brand-light font-sans">
-      <Navbar
-        userName={fullName}
-        userRole="Participant"
-    />
+      <Navbar userName={fullName} userRole="Participant" />
+
       <main className="max-w-[1400px] mx-auto p-6 md:p-8">
         <div className="mb-8">
           <h1 className="text-3xl font-extrabold text-gray-900">My Sessions</h1>
@@ -103,7 +110,6 @@ export default async function ParticipantSessionsPage() {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {/* Assigned / Not Completed */}
           <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
@@ -114,7 +120,7 @@ export default async function ParticipantSessionsPage() {
                   Assigned / Not Completed
                 </h2>
                 <p className="text-sm text-gray-500 font-medium">
-                  Sessions assigned by your instructor that still need to be done
+                  Sessions that still need your attention
                 </p>
               </div>
             </div>
@@ -134,7 +140,8 @@ export default async function ParticipantSessionsPage() {
 
                     {assignment.goal && (
                       <p className="mt-3 text-sm text-gray-700">
-                        <span className="font-semibold">Goal:</span> {assignment.goal}
+                        <span className="font-semibold">Goal:</span>{" "}
+                        {assignment.goal}
                       </p>
                     )}
 
@@ -175,7 +182,6 @@ export default async function ParticipantSessionsPage() {
             )}
           </section>
 
-          {/* Completed */}
           <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
@@ -207,7 +213,9 @@ export default async function ParticipantSessionsPage() {
                     <div className="mt-4 flex flex-wrap gap-2">
                       <InfoPill
                         icon={<CalendarDays size={14} />}
-                        text={`Completed ${formatDate(session.ended_at || session.created_at)}`}
+                        text={`Completed ${formatDate(
+                          session.ended_at || session.created_at
+                        )}`}
                       />
                       <InfoPill
                         icon={<Clock3 size={14} />}
@@ -276,13 +284,13 @@ function StatusPill({ status }: { status: string }) {
       ? "bg-green-50 text-green-700 border-green-200"
       : status === "in_progress"
       ? "bg-yellow-50 text-yellow-700 border-yellow-200"
-      : "bg-white text-gray-700 border-brand-muted";
+      : "bg-blue-50 text-blue-700 border-blue-200";
 
   return (
     <span
       className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${styles}`}
     >
-      {status.replace("_", " ")}
+      {status.replaceAll("_", " ")}
     </span>
   );
 }

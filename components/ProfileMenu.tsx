@@ -6,8 +6,8 @@ import { ChevronDown, LogOut, User } from "lucide-react";
 import { signOut } from "@/app/actions/auth";
 
 export default function ProfileMenu({
-  initials = "A",
-  name = "Alex",
+  initials,
+  name,
   role = "Participant",
 }: {
   initials?: string;
@@ -17,18 +17,22 @@ export default function ProfileMenu({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement | null>(null);
 
-  // close on outside click + escape
+  const displayName = name?.trim() || "Loading...";
+  const displayInitial = initials || name?.trim()?.charAt(0)?.toUpperCase() || "?";
+
   useEffect(() => {
     function onDown(e: MouseEvent) {
       if (!ref.current) return;
       if (!ref.current.contains(e.target as Node)) setOpen(false);
     }
+
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setOpen(false);
     }
 
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
+
     return () => {
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("keydown", onKey);
@@ -37,29 +41,27 @@ export default function ProfileMenu({
 
   return (
     <div className="relative" ref={ref}>
-      {/* Trigger */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="hidden sm:flex items-center gap-3 bg-white border-2 border-brand-muted rounded-2xl px-3 py-2 shadow-sm hover:border-brand-primary transition-colors"
       >
         <div className="h-9 w-9 rounded-full bg-brand-light border-2 border-brand-muted flex items-center justify-center">
-          <span className="text-brand-primary font-bold">{initials}</span>
+          <span className="text-brand-primary font-bold">{displayInitial}</span>
         </div>
 
         <div className="leading-tight text-left">
-          <div className="text-sm font-semibold text-gray-900">{name}</div>
+          <div className="text-sm font-semibold text-gray-900">{displayName}</div>
           <div className="text-xs text-gray-500 font-medium">{role}</div>
         </div>
 
         <ChevronDown size={18} className="text-gray-400" />
       </button>
 
-      {/* Dropdown */}
       {open && (
         <div className="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border-2 border-brand-muted bg-white shadow-lg">
           <div className="px-4 py-3 border-b border-brand-muted bg-brand-light/40">
-            <div className="text-sm font-semibold text-gray-900">{name}</div>
+            <div className="text-sm font-semibold text-gray-900">{displayName}</div>
             <div className="text-xs text-gray-500 font-medium">{role}</div>
           </div>
 
@@ -73,7 +75,6 @@ export default function ProfileMenu({
               Profile
             </Link>
 
-            {/* Server action logout */}
             <form action={signOut}>
               <button
                 type="submit"

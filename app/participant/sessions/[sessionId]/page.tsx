@@ -20,6 +20,18 @@ type PageProps = {
   }>;
 };
 
+type FeedbackData = {
+  summary?: string;
+  strengths?: string[];
+  improvements?: string[];
+  next_step?: string;
+  scores?: {
+    clarity?: number;
+    confidence?: number;
+    relevance?: number;
+  };
+};
+
 function formatDate(dateString: string | null) {
   if (!dateString) return "—";
   return new Date(dateString).toLocaleDateString();
@@ -32,12 +44,27 @@ function formatDuration(seconds: number | null) {
   return `${mins}m ${secs}s`;
 }
 
-function prettyJson(value: unknown) {
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return "No feedback available.";
-  }
+function parseTranscriptBlocks(transcriptText: string) {
+  return transcriptText
+    .split("\n\n")
+    .map((block) => {
+      const lines = block.split("\n");
+
+      const question =
+        lines.find((line) => line.startsWith("Q:"))?.replace("Q:", "").trim() ||
+        "";
+
+      const answer =
+        lines.find((line) => line.startsWith("A:"))?.replace("A:", "").trim() ||
+        "";
+
+      const emotion =
+        lines.find((line) => line.startsWith("E:"))?.replace("E:", "").trim() ||
+        "";
+
+      return { question, answer, emotion };
+    })
+    .filter((item) => item.question || item.answer);
 }
 
 export default async function ParticipantSessionDetailsPage({
@@ -45,7 +72,6 @@ export default async function ParticipantSessionDetailsPage({
 }: PageProps) {
   const { sessionId } = await params;
 
-  // Create Supabase client INSIDE the request-scoped page function
   const supabase = await createSupabaseServer();
   const { data: authData } = await supabase.auth.getUser();
 
@@ -55,7 +81,6 @@ export default async function ParticipantSessionDetailsPage({
   const userId = authData.user.id;
   const fullName = authData.user.user_metadata?.full_name || "User";
 
-  // Load session
   const { data: session, error: sessionError } = await supabase
     .from("sessions")
     .select(
@@ -78,21 +103,18 @@ export default async function ParticipantSessionDetailsPage({
     notFound();
   }
 
-  // Load transcript
   const { data: transcript } = await supabase
     .from("transcripts")
     .select("transcript_text")
     .eq("session_id", sessionId)
     .maybeSingle();
 
-  // Load feedback
   const { data: feedback } = await supabase
     .from("feedback")
     .select("feedback_json")
     .eq("session_id", sessionId)
     .maybeSingle();
 
-  // Try to get instructor name from linked assignment
   let instructorName = "Instructor not available";
 
   if (session.assignment_id) {
@@ -115,6 +137,12 @@ export default async function ParticipantSessionDetailsPage({
     }
   }
 
+  const transcriptBlocks = transcript?.transcript_text
+    ? parseTranscriptBlocks(transcript.transcript_text)
+    : [];
+
+  const feedbackData = (feedback?.feedback_json || null) as FeedbackData | null;
+
   return (
     <div className="min-h-screen bg-brand-light font-sans">
       <Navbar userName={fullName} userRole="Participant" />
@@ -134,22 +162,13 @@ export default async function ParticipantSessionDetailsPage({
               {session.title || "Session Details"}
             </h1>
             <p className="mt-2 text-gray-600 font-medium">
-              Review your session clearly and simply.
+              Review your session in a simple and clear way.
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-8">
-          <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
-                <CheckCircle2 size={22} className="text-brand-primary" />
-              </div>
-              <h2 className="text-xl font-extrabold text-gray-900">
-                Session Info
-              </h2>
-            </div>
-
+          <ExpandableSection title="Session Info" defaultOpen={true}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <InfoCard
                 icon={<CalendarDays size={18} />}
@@ -172,55 +191,150 @@ export default async function ParticipantSessionDetailsPage({
                 value={instructorName}
               />
             </div>
-          </section>
+          </ExpandableSection>
+          <ExpandableSection title="Feedback" defaultOpen={true}>
+            {feedbackData ? (
+              <div className="space-y-5">
+                {feedbackData.summary && (
+                  <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5">
+                    <div className="text-sm font-bold text-gray-900 mb-2">
+                      Summary
+                    </div>
+                    <p className="text-sm text-gray-700 font-medium leading-relaxed">
+                      {feedbackData.summary}
+                    </p>
+                  </div>
+                )}
 
-          <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
-                <FileText size={22} className="text-brand-primary" />
-              </div>
-              <h2 className="text-xl font-extrabold text-gray-900">
-                Transcript
-              </h2>
-            </div>
+                {feedbackData.scores && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <InfoCard
+                      icon={<CheckCircle2 size={18} />}
+                      label="Clarity"
+                      value={`${feedbackData.scores.clarity ?? "—"}/10`}
+                    />
+                    <InfoCard
+                      icon={<CheckCircle2 size={18} />}
+                      label="Confidence"
+                      value={`${feedbackData.scores.confidence ?? "—"}/10`}
+                    />
+                    <InfoCard
+                      icon={<CheckCircle2 size={18} />}
+                      label="Relevance"
+                      value={`${feedbackData.scores.relevance ?? "—"}/10`}
+                    />
+                  </div>
+                )}
 
-            {transcript?.transcript_text ? (
-              <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5">
-                <pre className="whitespace-pre-wrap break-words text-sm text-gray-800 font-medium">
-                  {transcript.transcript_text}
-                </pre>
-              </div>
-            ) : (
-              <EmptyState text="No transcript available yet." />
-            )}
-          </section>
+                {feedbackData.strengths?.length ? (
+                  <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5">
+                    <div className="text-sm font-bold text-gray-900 mb-2">
+                      What Went Well
+                    </div>
+                    <ul className="list-disc ml-5 space-y-1 text-sm text-gray-700 font-medium">
+                      {feedbackData.strengths.map((item, i) => (
+                        <li key={i}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
 
-          <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
-                <MessageSquareText
-                  size={22}
-                  className="text-brand-primary"
-                />
-              </div>
-              <h2 className="text-xl font-extrabold text-gray-900">
-                Feedback
-              </h2>
-            </div>
+                {feedbackData.improvements?.length ? (
+                  <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5">
+                    <div className="text-sm font-bold text-gray-900 mb-2">
+                      What to Improve
+                    </div>
+                    <ul className="list-disc ml-5 space-y-1 text-sm text-gray-700 font-medium">
+                      {feedbackData.improvements.map((item, i) => (
+                        <li key={i}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
 
-            {feedback?.feedback_json ? (
-              <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5">
-                <pre className="whitespace-pre-wrap break-words text-sm text-gray-800 font-medium">
-                  {prettyJson(feedback.feedback_json)}
-                </pre>
+                {feedbackData.next_step && (
+                  <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5">
+                    <div className="text-sm font-bold text-gray-900 mb-2">
+                      Next Step
+                    </div>
+                    <p className="text-sm text-gray-700 font-medium leading-relaxed">
+                      {feedbackData.next_step}
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
               <EmptyState text="No feedback available yet." />
             )}
-          </section>
+          </ExpandableSection>
+
+          <ExpandableSection title="Interview Content" defaultOpen={false}>
+            {transcriptBlocks.length > 0 ? (
+              <div className="space-y-4">
+                {transcriptBlocks.map((block, index) => (
+                  <div
+                    key={index}
+                    className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5"
+                  >
+                    <div className="text-xs font-semibold text-gray-500 mb-1">
+                      Question
+                    </div>
+                    <div className="text-gray-900 font-semibold mb-4">
+                      {block.question}
+                    </div>
+
+                    <div className="text-xs font-semibold text-gray-500 mb-1">
+                      Your Response
+                    </div>
+                    <div className="text-gray-800 font-medium mb-4">
+                      {block.answer}
+                    </div>
+
+                    {block.emotion && (
+                      <>
+                        <div className="text-xs font-semibold text-gray-500 mb-1">
+                          Expression
+                        </div>
+                        <div className="text-gray-700 font-medium">
+                          {block.emotion}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState text="No transcript available yet." />
+            )}
+          </ExpandableSection>
+
+          
         </div>
       </main>
     </div>
+  );
+}
+
+function ExpandableSection({
+  title,
+  children,
+  defaultOpen = true,
+}: {
+  title: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm"
+    >
+      <summary className="cursor-pointer list-none p-6 md:p-8 flex items-center justify-between">
+        <h2 className="text-xl font-extrabold text-gray-900">{title}</h2>
+        <span className="text-sm text-gray-500 font-medium">Open / Close</span>
+      </summary>
+      <div className="px-6 md:px-8 pb-6 md:pb-8">{children}</div>
+    </details>
   );
 }
 
