@@ -8,147 +8,125 @@ import {
   MessageSquare,
   Eye,
   Award,
+  ClipboardList,
 } from "lucide-react";
 import Navbar from "@/components/participantNavbar";
 import ActionCircle from "@/components/ActionCircle";
-import FeedbackCard from "@/components/FeedbackCard";
 import GoalCard from "@/components/GoalCard";
-import { redirect } from "next/navigation";
-import { createSupabaseServer } from "@/lib/supabaseServer";
+import { requireParticipant } from "@/lib/server/auth/requireParticipant";
+import { getParticipantDashboard } from "@/lib/server/participant/getParticipantDashboard";
+import { formatShortDate } from "@/lib/utils/studentHelpers";
 
-export default async function Home() {
-  // Create the server-side Supabase client inside the page request
-  const supabase = await createSupabaseServer();
+export default async function ParticipantDashboardPage() {
+  const { supabase, participantId, participantName } = await requireParticipant();
 
-  // Get the currently logged-in auth user
-  const { data } = await supabase.auth.getUser();
-
-  // Protect the participant dashboard
-  if (!data.user || data.user.role === "instructor") {
-    redirect("/login");
-  }
-
-  // Useful logged-in user info
-  const userId = data.user.id;
-  const fullName = data.user.user_metadata?.full_name || "User";
+  const { profile, stats, nextAssignment, pendingAssignments } =
+    await getParticipantDashboard(supabase, participantId);
 
   return (
     <div className="min-h-screen font-sans bg-brand-light">
-      <Navbar userName={fullName} userRole="Participant" />
+      <Navbar userName={participantName} userRole="Participant" />
 
       <main className="max-w-[1400px] mx-auto p-6 md:p-8 flex flex-col lg:flex-row gap-8">
-        {/* Left Column */}
         <div className="flex-1 flex flex-col gap-8">
-          {/* Welcome Card */}
           <section className="bg-white rounded-[2rem] p-10 border-2 border-brand-muted shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
-            {/* Decorative background accents */}
             <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-brand-light border-2 border-brand-muted opacity-70" />
             <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-brand-light border-2 border-brand-muted opacity-50" />
 
-            {/* Placeholder avatar circle */}
             <div className="relative w-36 h-36 rounded-full border-[6px] border-brand-primary overflow-hidden mb-6 shadow-lg bg-brand-light flex items-center justify-center">
               <span className="text-brand-primary font-extrabold text-5xl">
-                {fullName.charAt(0).toUpperCase()}
+                {participantName.charAt(0).toUpperCase()}
               </span>
             </div>
 
-            {/* Personalized greeting */}
             <h1 className="relative text-3xl font-semibold text-gray-900 mb-2">
-              Welcome back, {fullName}!
+              Welcome back, {participantName}!
             </h1>
 
             <p className="relative text-gray-500 font-medium">
-              You&apos;re on a{" "}
-              <span className="text-brand-primary font-semibold">
-                3-day streak
-              </span>{" "}
-              🔥
+              Keep practicing and building confidence one session at a time.
             </p>
 
-            {/* Quick summary pills */}
             <div className="relative mt-6 flex flex-wrap justify-center gap-3">
-              <Pill>Next task: Tell me about yourself</Pill>
-              <Pill>Focus: Filler words</Pill>
-              <Pill>Goal: Confidence</Pill>
+              <Pill>
+                Next task: {nextAssignment?.title || "No assigned task right now"}
+              </Pill>
+              <Pill>Goal: {profile?.job_goal || "Not added yet"}</Pill>
+              <Pill>
+                Pending assignments: {String(stats.pendingAssignments)}
+              </Pill>
             </div>
           </section>
 
-          {/* Action Buttons */}
           <section className="flex flex-wrap justify-center items-center gap-6 py-4">
             <ActionCircle
               icon={TrendingUp}
-              label="Review Progress"
+              label="View Sessions"
               variant="secondary"
-              href="/participant/progress"
+              href="/participant/sessions"
             />
 
-            {/* Start a new participant session and pass the logged-in participant id */}
             <ActionCircle
               icon={Play}
               label="Start Session"
               variant="primary"
               size="lg"
-              href={`/participant/sessions/new?participantId=${userId}`}
+              href={
+                nextAssignment
+                  ? `/participant/sessions/new?participantId=${participantId}&assignmentId=${nextAssignment.id}`
+                  : `/participant/sessions/new?participantId=${participantId}`
+              }
             />
 
             <ActionCircle
               icon={Book}
-              label="Skill Modules"
+              label="My Profile"
               variant="secondary"
-              href="/participant/modules"
+              href="/participant/profile"
             />
           </section>
 
-          {/* Progress + Goals */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card title="My Progress">
               <div className="flex gap-4">
                 <MiniStat
                   icon={<TrendingUp size={24} strokeWidth={2.5} />}
                   label="Sessions Completed"
-                  value="5"
+                  value={String(stats.totalSessions)}
                 />
                 <MiniStat
                   icon={<Award size={24} strokeWidth={2.5} />}
-                  label="Last Score"
+                  label="Latest Activity"
                   value={
-                    <>
-                      85{" "}
-                      <span className="text-sm text-gray-500 font-bold">
-                        /100
-                      </span>
-                    </>
+                    stats.latestCompletedDate
+                      ? formatShortDate(stats.latestCompletedDate)
+                      : "—"
                   }
                 />
               </div>
 
-              <div className="mt-4 border-2 border-brand-muted rounded-2xl p-4 bg-brand-light/40">
-                <div className="text-xs text-gray-600 font-semibold mb-1">
-                  This week
-                </div>
-                <div className="text-sm text-gray-700 font-medium">
-                  Keep the streak going — one more session to beat last week.
-                </div>
-              </div>
             </Card>
 
             <Card title="Upcoming Goals">
               <div className="flex flex-col gap-2">
-                <GoalCard
-                  icon={MessageSquare}
-                  title="Practice: 'Tell me about yourself'"
-                />
-                <GoalCard icon={Eye} title="Practice: Eye Contact" />
+                {pendingAssignments.length > 0 ? (
+                  pendingAssignments.slice(0, 3).map((assignment) => (
+                    <GoalCard
+                      key={assignment.id}
+                      icon={ClipboardList}
+                      title={assignment.title}
+                    />
+                  ))
+                ) : (
+                  <div className="rounded-2xl border-2 border-dashed border-brand-muted bg-brand-light/30 p-6 text-sm text-gray-500 font-medium">
+                    No goals assigned yet.
+                  </div>
+                )}
               </div>
-
-              <button className="mt-4 w-full bg-white border-2 border-brand-muted hover:border-brand-primary text-gray-900 font-semibold py-3 rounded-xl transition-colors">
-                Add Goal
-              </button>
             </Card>
           </section>
         </div>
 
-        {/* Right Column - Sidebar */}
         <aside className="w-full lg:w-[420px] bg-white rounded-[2rem] border-2 border-brand-muted p-8 shadow-sm h-fit">
           <div className="flex items-start gap-4 mb-6 pb-6 border-b border-brand-muted">
             <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
@@ -157,39 +135,24 @@ export default async function Home() {
 
             <div className="flex flex-col gap-1">
               <h2 className="text-gray-900 font-semibold text-[17px]">
-                Instructor Feedback
+                Coaching Snapshot
               </h2>
               <p className="text-gray-500 text-[13px] font-medium">
-                Recent notes from your coach
+                Quick reminders to keep you focused
               </p>
             </div>
           </div>
 
-          {/* Recent instructor feedback cards */}
-          <div className="flex flex-col gap-2">
-            <FeedbackCard
-              type="positive"
-              coachName="Coach Sarah"
-              timeAgo="2 days ago"
-              message="Great improvement on eye contact! Your engagement with the camera felt much more natural in the last session."
+          <div className="flex flex-col gap-3">
+            <SidebarNote
+              title="Job Goal"
+              text={profile?.job_goal || "No job goal added yet."}
             />
-            <FeedbackCard
-              type="focus"
-              coachName="Coach Sarah"
-              timeAgo="3 days ago"
-              message="Let's work on reducing filler words like 'um' and 'uh'. Try pausing silently instead—it shows confidence."
-            />
-            <FeedbackCard
-              type="general"
-              coachName="Coach Sarah"
-              timeAgo="5 days ago"
-              message="Remember to take a breath before answering. This helps with pacing and gives you time to organize your thoughts."
+            <SidebarNote
+              title="Next Assignment"
+              text={nextAssignment?.title || "No assignment waiting right now."}
             />
           </div>
-
-          <button className="mt-5 w-full bg-brand-secondary hover:bg-brand-primary text-white font-semibold py-4 rounded-xl transition-colors shadow-md">
-            View All Feedback
-          </button>
         </aside>
       </main>
     </div>
@@ -244,5 +207,20 @@ function Pill({ children }: { children: React.ReactNode }) {
     <span className="px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-brand-muted bg-white text-gray-700">
       {children}
     </span>
+  );
+}
+
+function SidebarNote({
+  title,
+  text,
+}: {
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-4">
+      <div className="text-xs font-semibold text-gray-500 mb-1">{title}</div>
+      <div className="text-sm text-gray-800 font-medium leading-6">{text}</div>
+    </div>
   );
 }

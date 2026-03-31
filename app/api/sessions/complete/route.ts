@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { analyzeSession } from "@/lib/server/sessions/analyzeSession";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -151,20 +152,13 @@ export async function POST(req: NextRequest) {
     }
 
     // ==============================
-    // 6. TRIGGER FEEDBACK GENERATION (NEW 🔥)
+    // 6. TRIGGER FEEDBACK GENERATION 
     // ==============================
-    try {
-      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/sessions/analyze`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ sessionId }),
-      });
-    } catch (err) {
-      console.error("Feedback trigger failed:", err);
-      // ⚠️ don't fail session completion because of feedback
-    }
+ try {
+  await analyzeSession(sessionId);
+} catch (err) {
+  console.error("Feedback trigger failed:", err);
+}
 
     // ==============================
     // 7. SUCCESS RESPONSE

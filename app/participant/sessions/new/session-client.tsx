@@ -20,6 +20,18 @@ type EmotionScore = {
   score: number;
 };
 
+type VoiceMessage = {
+  type?: string;
+  message?: {
+    content?: string;
+  };
+  models?: {
+    prosody?: {
+      scores?: Record<string, number>;
+    };
+  };
+};
+
 function formatTime(sec: number) {
   const m = Math.floor(sec / 60)
     .toString()
@@ -42,7 +54,7 @@ function getTopEmotions(
     .slice(0, limit);
 }
 
-function buildCompactTranscript(messages: any[]) {
+function buildCompactTranscript(messages: VoiceMessage[]) {
   if (!messages || messages.length === 0) return "";
 
   const conversation = messages.filter(
@@ -61,9 +73,7 @@ function buildCompactTranscript(messages: any[]) {
 
     if (msg?.type === "user_message") {
       const answer = msg?.message?.content?.trim() || "(inaudible)";
-      const prosody = msg?.models?.prosody?.scores as
-        | Record<string, number>
-        | undefined;
+      const prosody = msg?.models?.prosody?.scores;
 
       const topEmotions = getTopEmotions(prosody, 2);
       const emotionText =
@@ -113,11 +123,12 @@ export default function SessionClient() {
     async function fetchToken() {
       try {
         const res = await fetch("/api/hume/token");
-        const data = await res.json();
+        const data: { accessToken?: string } = await res.json();
+
         if (data.accessToken) {
           setAccessToken(data.accessToken);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Failed to fetch hume token", err);
       }
     }
@@ -157,6 +168,8 @@ function SessionContent({ accessToken }: { accessToken: string }) {
   const [isSavingSession, setIsSavingSession] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
 
+  const typedMessages = messages as VoiceMessage[];
+
   const isRecording = status.value === "connected";
   const completionContent = getCompletionMessage(seconds);
 
@@ -175,15 +188,20 @@ function SessionContent({ accessToken }: { accessToken: string }) {
         if (cancelled) return;
 
         streamRef.current = stream;
-        stream.getVideoTracks().forEach((t) => (t.enabled = camOn));
+        stream.getVideoTracks().forEach((t) => {
+          t.enabled = camOn;
+        });
 
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
         }
-      } catch (e: any) {
-        setError(
-          e?.message || "Could not access camera. Please allow permissions."
-        );
+      } catch (e: unknown) {
+        const message =
+          e instanceof Error
+            ? e.message
+            : "Could not access camera. Please allow permissions.";
+
+        setError(message);
       }
     }
 
@@ -194,10 +212,11 @@ function SessionContent({ accessToken }: { accessToken: string }) {
       streamRef.current?.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
     };
-  }, []);
+  }, [camOn]);
 
   useEffect(() => {
     if (!isRecording) return;
+
     const id = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(id);
   }, [isRecording]);
@@ -205,19 +224,15 @@ function SessionContent({ accessToken }: { accessToken: string }) {
   useEffect(() => {
     const stream = streamRef.current;
     if (!stream) return;
-    stream.getVideoTracks().forEach((t) => (t.enabled = camOn));
+
+    stream.getVideoTracks().forEach((t) => {
+      t.enabled = camOn;
+    });
   }, [camOn]);
 
   async function startRecording() {
     try {
       setError(null);
-
-      if (!participantId) {
-        setError(
-          "Missing participantId in URL. Please start the session from the participant dashboard."
-        );
-        return;
-      }
 
       const createRes = await fetch("/api/sessions/create", {
         method: "POST",
@@ -225,20 +240,24 @@ function SessionContent({ accessToken }: { accessToken: string }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          participantId,
-          assignmentId: assignmentId ?? null,
-          title: "Practice Session",
-          humeConfigId: process.env.NEXT_PUBLIC_HUME_CONFIG_ID ?? null,
-        }),
+        assignmentId: assignmentId ?? null,
+        title: "Practice Session",
+        humeConfigId: process.env.NEXT_PUBLIC_HUME_CONFIG_ID ?? null,
+      }),
       });
 
-      const createData = await createRes.json();
+      const createData: { sessionId?: string; error?: string } =
+        await createRes.json();
 
       if (!createRes.ok) {
         throw new Error(createData.error || "Failed to create session");
       }
 
-      setSessionId(createData.sessionId as string);
+      if (!createData.sessionId) {
+        throw new Error("Session was created but no sessionId was returned.");
+      }
+
+      setSessionId(createData.sessionId);
       setIsFinished(false);
       setSeconds(0);
 
@@ -246,58 +265,57 @@ function SessionContent({ accessToken }: { accessToken: string }) {
         auth: { type: "accessToken", value: accessToken },
         configId: process.env.NEXT_PUBLIC_HUME_CONFIG_ID || undefined,
       });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err?.message || "Failed to start session");
+      const message =
+        err instanceof Error ? err.message : "Failed to start session";
+      setError(message);
     }
   }
 
   async function stopRecording() {
-  if (!sessionId) {
-    setError("No sessionId found. Could not complete session.");
-    return;
-  }
-
-  try {
-    setIsSavingSession(true);
-    setError(null);
-
-    // Freeze messages first
-    const frozenMessages = [...messages];
-    const compactTranscript = buildCompactTranscript(frozenMessages);
-
-    // Disconnect Hume immediately so the session really ends right away
-    await disconnect();
-
-    // Show finished UI right away
-    setIsFinished(true);
-
-    // Then save session in background
-    const completeRes = await fetch("/api/sessions/complete", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        sessionId,
-        compactTranscript,
-        durationSeconds: seconds,
-        transcriptStatus: "completed",
-      }),
-    });
-
-    const completeData = await completeRes.json();
-
-    if (!completeRes.ok) {
-      throw new Error(completeData.error || "Failed to complete session");
+    if (!sessionId) {
+      setError("No sessionId found. Could not complete session.");
+      return;
     }
-  } catch (err: any) {
-    console.error(err);
-    setError(err?.message || "Failed to save session");
-  } finally {
-    setIsSavingSession(false);
+
+    try {
+      setIsSavingSession(true);
+      setError(null);
+
+      const frozenMessages = [...typedMessages];
+      const compactTranscript = buildCompactTranscript(frozenMessages);
+
+      await disconnect();
+      setIsFinished(true);
+
+      const completeRes = await fetch("/api/sessions/complete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sessionId,
+          compactTranscript,
+          durationSeconds: seconds,
+          transcriptStatus: "completed",
+        }),
+      });
+
+      const completeData: { error?: string } = await completeRes.json();
+
+      if (!completeRes.ok) {
+        throw new Error(completeData.error || "Failed to complete session");
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      const message =
+        err instanceof Error ? err.message : "Failed to save session";
+      setError(message);
+    } finally {
+      setIsSavingSession(false);
+    }
   }
-}
 
   async function resetSession() {
     await disconnect();
@@ -308,7 +326,6 @@ function SessionContent({ accessToken }: { accessToken: string }) {
     setIsSavingSession(false);
   }
 
-  // Show completion screen ONLY after Finish Session is clicked
   if (isFinished) {
     return (
       <div className="min-h-screen bg-brand-light flex items-center justify-center px-6 py-10">
@@ -524,7 +541,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
               <li>Click Start Connection to connect to the EVI</li>
               <li>Wait for it to ask the question</li>
               <li>Answer clearly into your microphone</li>
-              <li>When you're done, let it respond</li>
+              <li>When you are done, let it respond</li>
               <li>Click Finish Session when you are done</li>
             </ul>
           </div>

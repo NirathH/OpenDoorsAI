@@ -1,16 +1,26 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
-  Clock3,
   FileText,
   UserCircle2,
+  Briefcase,
+  StickyNote,
 } from "lucide-react";
 import InstructorSidebar from "@/components/InstructorSidebar";
-import { createSupabaseServer } from "@/lib/supabaseServer";
+import { requireInstructor } from "@/lib/server/auth/requireInstructor";
+import {
+  getInstructorStudentDetails,
+  type SessionRow,
+} from "@/lib/server/instructor/getInstructorStudentDetails";
+import {
+  formatDate,
+  formatDuration,
+  formatShortDate,
+  getInitials,
+} from "@/lib/utils/studentHelpers";
 
 type PageProps = {
   params: Promise<{
@@ -18,92 +28,13 @@ type PageProps = {
   }>;
 };
 
-function formatDate(dateString: string | null) {
-  if (!dateString) return "—";
-
-  return new Date(dateString).toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-function formatShortDate(dateString: string | null) {
-  if (!dateString) return "—";
-
-  return new Date(dateString).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatDuration(seconds: number | null) {
-  if (seconds == null) return "—";
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}m ${secs}s`;
-}
-
-function getInitials(name: string) {
-  const parts = name.trim().split(" ").filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0][0].toUpperCase();
-  return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
-}
 
 export default async function StudentDetailsPage({ params }: PageProps) {
   const { studentId } = await params;
 
-  const supabase = await createSupabaseServer();
-  const { data: authData } = await supabase.auth.getUser();
-
-  if (!authData.user) redirect("/login");
-
-  const instructorId = authData.user.id;
-
-  const { data: instructorProfile } = await supabase
-    .from("profiles")
-    .select("full_name, role")
-    .eq("user_id", instructorId)
-    .maybeSingle();
-
-  if (!instructorProfile || instructorProfile.role !== "instructor") {
-    redirect("/login");
-  }
-
-  const instructorName =
-    instructorProfile.full_name?.trim() ||
-    authData.user.user_metadata?.full_name?.trim() ||
-    "";
-
-  const { data: studentProfile } = await supabase
-    .from("profiles")
-    .select("user_id, full_name, role, instructor_id, created_at")
-    .eq("user_id", studentId)
-    .eq("role", "participant")
-    .eq("instructor_id", instructorId)
-    .maybeSingle();
-
-  if (!studentProfile) {
-    notFound();
-  }
-
-  const { data: sessions } = await supabase
-    .from("sessions")
-    .select(
-      "id, title, status, started_at, ended_at, duration_seconds, created_at, compact_transcript, assignment_id"
-    )
-    .eq("participant_id", studentId)
-    .order("created_at", { ascending: false });
-
-  const safeName = studentProfile.full_name?.trim() || "Unnamed Student";
-  const totalSessions = sessions?.length ?? 0;
-  const completedSessions =
-    sessions?.filter((session) => session.status === "completed").length ?? 0;
-  const latestSession = sessions?.[0] ?? null;
+  const { supabase, instructorId, instructorName } = await requireInstructor();
+  const { studentProfile, safeName, sessions, stats } =
+    await getInstructorStudentDetails(supabase, instructorId, studentId);
 
   return (
     <div className="min-h-screen bg-brand-light font-sans flex">
@@ -122,7 +53,7 @@ export default async function StudentDetailsPage({ params }: PageProps) {
           </div>
 
           <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8 mb-8">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
               <div className="flex items-center gap-4">
                 <div className="h-16 w-16 rounded-full bg-brand-light border-2 border-brand-muted flex items-center justify-center text-brand-primary font-bold text-xl">
                   {getInitials(safeName)}
@@ -145,28 +76,42 @@ export default async function StudentDetailsPage({ params }: PageProps) {
                 />
                 <InfoBadge
                   icon={<FileText size={15} />}
-                  text={`${totalSessions} total sessions`}
+                  text={`${stats.totalSessions} total sessions`}
                 />
                 <InfoBadge
                   icon={<CalendarDays size={15} />}
-                  text={`${completedSessions} completed`}
+                  text={`${stats.completedSessions} completed`}
                 />
               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <DetailCard
+                icon={<Briefcase size={18} />}
+                label="Job Goal"
+                value={studentProfile.job_goal || "Not added yet"}
+              />
+              <DetailCard
+                icon={<StickyNote size={18} />}
+                label="Coach Notes"
+                value={studentProfile.coach_notes || "Not added yet"}
+              />
             </div>
           </section>
 
           <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <StatCard label="Total Sessions" value={String(totalSessions)} />
+            <StatCard label="Total Sessions" value={String(stats.totalSessions)} />
             <StatCard
               label="Completed Sessions"
-              value={String(completedSessions)}
+              value={String(stats.completedSessions)}
             />
             <StatCard
               label="Latest Activity"
               value={
-                latestSession
+                stats.latestSession
                   ? formatShortDate(
-                      latestSession.ended_at || latestSession.created_at
+                      stats.latestSession.ended_at ||
+                        stats.latestSession.created_at
                     )
                   : "—"
               }
@@ -183,7 +128,7 @@ export default async function StudentDetailsPage({ params }: PageProps) {
               </p>
             </div>
 
-            {!sessions || sessions.length === 0 ? (
+            {sessions.length === 0 ? (
               <div className="p-10 text-center">
                 <div className="mx-auto h-16 w-16 rounded-full border-2 border-brand-muted bg-brand-light flex items-center justify-center mb-4">
                   <FileText className="text-brand-primary" size={26} />
@@ -198,7 +143,7 @@ export default async function StudentDetailsPage({ params }: PageProps) {
               </div>
             ) : (
               <div className="p-4 md:p-6 space-y-4">
-                {sessions.map((session) => (
+                {sessions.map((session: SessionRow) => (
                   <div
                     key={session.id}
                     className="rounded-2xl border-2 border-brand-muted bg-brand-light/30 p-5"
@@ -288,5 +233,27 @@ function InfoBadge({
       {icon}
       {text}
     </span>
+  );
+}
+
+function DetailCard({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-[1.5rem] border-2 border-brand-muted bg-brand-light/30 p-4">
+      <div className="flex items-center gap-2 text-gray-700 font-semibold text-sm mb-2">
+        {icon}
+        {label}
+      </div>
+      <p className="text-sm text-gray-800 leading-6 whitespace-pre-line">
+        {value}
+      </p>
+    </div>
   );
 }

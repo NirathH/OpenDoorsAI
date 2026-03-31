@@ -1,31 +1,12 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { ArrowLeft, UserPlus } from "lucide-react";
 import InstructorSidebar from "@/components/InstructorSidebar";
-import { createSupabaseServer } from "@/lib/supabaseServer";
+import { requireInstructor } from "@/lib/server/auth/requireInstructor";
 
 export default async function NewStudentPage() {
-  const supabase = await createSupabaseServer();
-  const { data: authData } = await supabase.auth.getUser();
-
-  if (!authData.user) redirect("/login");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name, role")
-    .eq("user_id", authData.user.id)
-    .maybeSingle();
-
-  if (!profile || profile.role !== "instructor") {
-    redirect("/login");
-  }
-
-  const instructorName =
-    profile.full_name?.trim() ||
-    authData.user.user_metadata?.full_name?.trim() ||
-    "";
+  const { instructorName } = await requireInstructor();
 
   return (
     <div className="min-h-screen bg-brand-light font-sans flex">
@@ -103,9 +84,32 @@ export default async function NewStudentPage() {
                   placeholder="At least 8 characters"
                 />
                 <p className="mt-2 text-xs text-gray-500 font-medium">
-                  The student can use this password to log in and change it
-                  later.
+                  The student can use this password to log in and change it later.
                 </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Job Goal
+                </label>
+                <input
+                  name="job_goal"
+                  type="text"
+                  className="w-full rounded-2xl border-2 border-brand-muted bg-white px-4 py-3 text-sm font-medium text-gray-800 outline-none focus:border-brand-primary"
+                  placeholder="Example: Customer service representative"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Notes
+                </label>
+                <textarea
+                  name="coach_notes"
+                  rows={4}
+                  className="w-full rounded-2xl border-2 border-brand-muted bg-white px-4 py-3 text-sm font-medium text-gray-800 outline-none focus:border-brand-primary resize-none"
+                  placeholder="Optional instructor-only notes."
+                />
               </div>
 
               <div className="pt-2 flex flex-wrap gap-3">
