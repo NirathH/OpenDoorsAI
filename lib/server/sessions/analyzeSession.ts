@@ -100,7 +100,7 @@ function normalizeFeedback(raw: unknown, transcriptText: string): FeedbackJson {
   };
 }
 
-export async function analyzeSession(sessionId: string) {
+export async function analyzeSession(sessionId: string, offlineContext?: string) {
   try {
     console.log("Analyzing session:", sessionId);
 
@@ -204,13 +204,15 @@ ${participantContext}
 
 ${assignmentContext}
 
+${offlineContext || ""}
+
 Transcript:
 ${transcriptText}
 `;
 
       try {
         const completion = await openai.chat.completions.create({
-          model: "gpt-4.1-mini",
+          model: "gpt-4o-mini",
           temperature: 0.3,
           response_format: { type: "json_object" },
           messages: [

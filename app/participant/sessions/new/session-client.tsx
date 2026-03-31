@@ -167,11 +167,17 @@ function SessionContent({ accessToken }: { accessToken: string }) {
   const [isFinished, setIsFinished] = useState(false);
   const [isSavingSession, setIsSavingSession] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisMessage, setAnalysisMessage] = useState("");
 
   const typedMessages = messages as VoiceMessage[];
 
   const isRecording = status.value === "connected";
   const completionContent = getCompletionMessage(seconds);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -261,6 +267,24 @@ function SessionContent({ accessToken }: { accessToken: string }) {
       setIsFinished(false);
       setSeconds(0);
 
+      // Start audio recording for the backend saving
+      try {
+        const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioStreamRef.current = audioStream;
+        const mediaRecorder = new MediaRecorder(audioStream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (e) => {
+          if (e.data.size > 0) {
+            audioChunksRef.current.push(e.data);
+          }
+        };
+        mediaRecorder.start(1000); // chunk every 1 second
+      } catch (err) {
+        console.error("Could not capture audio for recording", err);
+      }
+
       await connect({
         auth: { type: "accessToken", value: accessToken },
         configId: process.env.NEXT_PUBLIC_HUME_CONFIG_ID || undefined,
@@ -287,6 +311,34 @@ function SessionContent({ accessToken }: { accessToken: string }) {
       const compactTranscript = buildCompactTranscript(frozenMessages);
 
       await disconnect();
+
+      // Stop local recording and upload
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        mediaRecorderRef.current.stop();
+        
+        if (audioStreamRef.current) {
+          audioStreamRef.current.getTracks().forEach((t) => t.stop());
+          audioStreamRef.current = null;
+        }
+
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const formData = new FormData();
+        formData.append("file", blob, "session.webm");
+        formData.append("session_id", sessionId);
+        if (participantId) {
+          formData.append("participant_id", participantId);
+        }
+
+        try {
+          await fetch("/api/recordings/upload", {
+            method: "POST",
+            body: formData,
+          });
+        } catch (err) {
+          console.error("Failed to upload recording", err);
+        }
+      }
+
       setIsFinished(true);
 
       const completeRes = await fetch("/api/sessions/complete", {
@@ -326,6 +378,52 @@ function SessionContent({ accessToken }: { accessToken: string }) {
     setIsSavingSession(false);
   }
 
+  useEffect(() => {
+    if (!isFinished || !sessionId) return;
+    let cancelled = false;
+
+    async function runOfflineAnalysis() {
+      try {
+        setIsAnalyzing(true);
+        setAnalysisMessage("Starting offline behavioral analysis...");
+
+        const startRes = await fetch("/api/hume/batch/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId })
+        });
+        const startData = await startRes.json();
+        if (!startRes.ok || !startData.jobId) throw new Error(startData.error || "Failed to start batch");
+
+        const jobId = startData.jobId;
+        setAnalysisMessage("Analyzing emotions (this usually takes 15-45 seconds)...");
+
+        while (!cancelled) {
+          await new Promise(r => setTimeout(r, 5000));
+
+          const pollRes = await fetch("/api/hume/batch/poll", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ jobId, sessionId })
+          });
+          const pollData = await pollRes.json();
+
+          if (pollData.status === "COMPLETED" || pollData.status === "FAILED") {
+             break;
+          }
+        }
+      } catch (err) {
+        console.error("Offline analysis failed", err);
+      } finally {
+        if (!cancelled) setIsAnalyzing(false);
+      }
+    }
+
+    runOfflineAnalysis();
+
+    return () => { cancelled = true; };
+  }, [isFinished, sessionId]);
+
   if (isFinished) {
     return (
       <div className="min-h-screen bg-brand-light flex items-center justify-center px-6 py-10">
@@ -355,13 +453,20 @@ function SessionContent({ accessToken }: { accessToken: string }) {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              {sessionId && (
+              {sessionId && !isAnalyzing && (
                 <Link
                   href={`/participant/sessions/${sessionId}`}
                   className="inline-flex items-center gap-2 bg-brand-secondary hover:bg-brand-primary text-white font-semibold px-6 py-3 rounded-xl transition-colors shadow-md"
                 >
                   See My Summary
                 </Link>
+              )}
+
+              {isAnalyzing && (
+                 <div className="flex flex-col items-center mt-2 w-full">
+                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary mb-3"></div>
+                   <span className="text-sm text-brand-primary font-bold">{analysisMessage}</span>
+                 </div>
               )}
 
               <button
@@ -510,14 +615,14 @@ function SessionContent({ accessToken }: { accessToken: string }) {
               Prompt
             </div>
             <div className="text-gray-900 font-extrabold">
-              “Tell me about yourself.”
+              “You just arrived for your shift, and your manager gave you three tasks: fold the clean towels, sweep the breakroom, and restock the front display. Walk me through how you would organize your time to get these done.”
             </div>
             <div className="mt-3 text-sm text-gray-700 font-medium leading-relaxed">
-              Try a 3-part structure:
+              Think about priorities:
               <ul className="list-disc ml-5 mt-2 space-y-1">
-                <li>Who you are</li>
-                <li>What you do / what you’re good at</li>
-                <li>Why you’re a fit / what you want next</li>
+                <li>Which task is most urgent?</li>
+                <li>How can you be efficient?</li>
+                <li>Can any tasks be combined?</li>
               </ul>
             </div>
           </div>

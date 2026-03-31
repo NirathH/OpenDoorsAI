@@ -117,6 +117,21 @@ export default async function ParticipantSessionDetailsPage({
 
   let instructorName = "Instructor not available";
 
+  let audioUrl: string | null = null;
+  const { data: rec } = await supabase
+    .from("recordings")
+    .select("storage_path")
+    .eq("session_id", sessionId)
+    .maybeSingle();
+
+  if (rec?.storage_path) {
+    const { data: signed } = await supabase.storage
+      .from("recordings")
+      .createSignedUrl(rec.storage_path, 3600); // 1 hour
+    if (signed?.signedUrl) {
+      audioUrl = signed.signedUrl;
+    }
+  }
   if (session.assignment_id) {
     const { data: assignment } = await supabase
       .from("session_assignments")
@@ -191,6 +206,17 @@ export default async function ParticipantSessionDetailsPage({
                 value={instructorName}
               />
             </div>
+            {audioUrl && (
+              <div className="mt-6 pt-6 border-t-2 border-brand-muted">
+                <div className="text-sm font-semibold text-gray-700 mb-3 ml-2 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-brand-primary"></div>
+                  Session Recording
+                </div>
+                <audio controls className="w-full rounded-full" src={audioUrl}>
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
+            )}
           </ExpandableSection>
           <ExpandableSection title="Feedback" defaultOpen={true}>
             {feedbackData ? (

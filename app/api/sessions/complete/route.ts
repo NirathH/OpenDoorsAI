@@ -152,13 +152,9 @@ export async function POST(req: NextRequest) {
     }
 
     // ==============================
-    // 6. TRIGGER FEEDBACK GENERATION 
+    // 6. OFFLINE ANALYSIS IS TRIGGERED BY CLIENT AFTER THIS
     // ==============================
- try {
-  await analyzeSession(sessionId);
-} catch (err) {
-  console.error("Feedback trigger failed:", err);
-}
+
 
     // ==============================
     // 7. SUCCESS RESPONSE
