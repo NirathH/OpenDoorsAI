@@ -1,16 +1,38 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+/**
+ * Ensure Node.js runtime (needed for file handling + Supabase admin)
+ */
 export const runtime = "nodejs";
 
+/**
+ * POST /api/...
+ *
+ * Purpose:
+ * - Receive a recording file from the frontend
+ * - Upload it to Supabase Storage
+ * - Save metadata in the database
+ * - Mark the session as completed/uploaded
+ */
 export async function POST(req: Request) {
   try {
+    /**
+     * Step 1: Parse form data
+     * Expecting:
+     * - session_id
+     * - participant_id
+     * - file
+     */
     const formData = await req.formData();
 
     const session_id = formData.get("session_id")?.toString();
     const participant_id = formData.get("participant_id")?.toString();
     const upload = formData.get("file");
 
+    /**
+     * Step 2: Validate required fields
+     */
     if (!session_id || !participant_id) {
       return NextResponse.json(
         { ok: false, error: "session_id and participant_id are required" },
@@ -18,7 +40,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // Accept File OR Blob-like objects
+    /**
+     * Step 3: Validate file input
+     * Accepts File or Blob-like objects
+     */
     if (!upload || typeof upload !== "object" || !("arrayBuffer" in upload)) {
       return NextResponse.json(
         { ok: false, error: "file is required (multipart form-data)" },
@@ -33,7 +58,9 @@ export async function POST(req: Request) {
 
     const mimeType = fileLike.type || "video/webm";
 
-    // Determine file extension
+    /**
+     * Step 4: Determine file extension based on MIME type
+     */
     const ext =
       mimeType.includes("mp4")
         ? "mp4"
@@ -45,18 +72,25 @@ export async function POST(req: Request) {
         ? "mp3"
         : "bin";
 
-    // Storage path convention
+    /**
+     * Step 5: Define storage path
+     * Example: participantId/sessionId.webm
+     */
     const storage_path = `${participant_id}/${session_id}.${ext}`;
 
-    // Convert file to bytes
+    /**
+     * Step 6: Convert file to byte array
+     */
     const bytes = new Uint8Array(await fileLike.arrayBuffer());
 
-    // Upload to Supabase Storage
+    /**
+     * Step 7: Upload file to Supabase Storage
+     */
     const { error: uploadError } = await supabaseAdmin.storage
       .from("recordings")
       .upload(storage_path, bytes, {
         contentType: mimeType,
-        upsert: true,
+        upsert: true, // overwrite if exists
       });
 
     if (uploadError) {
@@ -66,7 +100,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // Save metadata in DB
+    /**
+     * Step 8: Save recording metadata in DB
+     */
     const { error: recordingError } = await supabaseAdmin
       .from("recordings")
       .upsert({
@@ -82,7 +118,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // Update session status
+    /**
+     * Step 9: Update session status
+     */
     const { error: sessionError } = await supabaseAdmin
       .from("sessions")
       .update({
@@ -98,6 +136,9 @@ export async function POST(req: Request) {
       );
     }
 
+    /**
+     * Step 10: Success response
+     */
     return NextResponse.json({
       ok: true,
       storage_path,

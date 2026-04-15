@@ -5,6 +5,9 @@ import {
 } from "@/lib/utils/studentHelpers";
 import { SupabaseClient } from "@supabase/supabase-js";
 
+/**
+ * Row shape used by the instructor students list page.
+ */
 export type StudentRow = {
   user_id: string;
   full_name: string;
@@ -14,10 +17,15 @@ export type StudentRow = {
   derived_status: DerivedStudentStatus;
 };
 
+/**
+ * Gets all students assigned to an instructor, then calculates
+ * dashboard-friendly stats like streak and activity status.
+ */
 export async function getInstructorStudents(
   supabase: SupabaseClient,
   instructorId: string
 ) {
+  // Fetch all participant profiles assigned to this instructor
   const { data: studentsData, error: studentsError } = await supabase
     .from("profiles")
     .select("user_id, full_name, created_at, instructor_id, role")
@@ -30,8 +38,9 @@ export async function getInstructorStudents(
   }
 
   const students = studentsData ?? [];
-  const studentIds = students.map((s: { user_id: string }) => s.user_id);
+  const studentIds = students.map((student: { user_id: string }) => student.user_id);
 
+  // Default to empty session list if no students exist
   let sessionsData:
     | Array<{
         participant_id: string;
@@ -40,6 +49,7 @@ export async function getInstructorStudents(
       }>
     | [] = [];
 
+  // Only query sessions if there are student ids
   if (studentIds.length > 0) {
     const { data, error } = await supabase
       .from("sessions")
@@ -55,18 +65,21 @@ export async function getInstructorStudents(
     sessionsData = data ?? [];
   }
 
+  // Build dashboard rows for each student
   const rows: StudentRow[] = students.map(
     (student: {
       user_id: string;
       full_name: string | null;
       created_at: string | null;
     }) => {
+      // Sessions that belong to the current student
       const studentSessions = sessionsData.filter(
         (session) => session.participant_id === student.user_id
       );
 
+      // Dates used for streak calculation
       const sessionDates = studentSessions
-        .map((s) => s.ended_at || s.created_at)
+        .map((session) => session.ended_at || session.created_at)
         .filter(Boolean) as string[];
 
       const lastSessionAt = studentSessions[0]?.ended_at || null;
@@ -88,12 +101,13 @@ export async function getInstructorStudents(
     rows,
     stats: {
       totalStudents: rows.length,
-      activeStudents: rows.filter((r) => r.derived_status === "Active").length,
+      activeStudents: rows.filter((row) => row.derived_status === "Active").length,
       needsAttention: rows.filter(
-        (r) => r.derived_status === "Needs Attention"
+        (row) => row.derived_status === "Needs Attention"
       ).length,
-      inactiveStudents: rows.filter((r) => r.derived_status === "Inactive")
-        .length,
+      inactiveStudents: rows.filter(
+        (row) => row.derived_status === "Inactive"
+      ).length,
     },
   };
 }

@@ -1,6 +1,9 @@
 import OpenAI from "openai";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+/**
+ * Final feedback shape saved in the database.
+ */
 type FeedbackJson = {
   summary: string;
   strengths: string[];
@@ -13,26 +16,31 @@ type FeedbackJson = {
   };
 };
 
+// Create OpenAI client using server-side API key
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,
 });
 
+/**
+ * Builds safe fallback feedback when the transcript is missing
+ * or the model fails.
+ */
 function buildFallbackFeedback(transcriptText: string): FeedbackJson {
   const hasContent = transcriptText.trim().length > 0;
 
   return {
     summary: hasContent
-      ? "You did a solid job completing this session. Your answers showed effort and engagement, and you’re building a strong foundation. With a bit more structure and confidence in delivery, your responses can become much more impactful."
-      : "You completed the session, which is a great first step. However, there wasn’t enough clear response data to give detailed feedback. Focus on speaking clearly and giving fuller answers next time.",
+      ? "You did a solid job completing this session. Your answers showed effort and engagement, and you're building a strong foundation. With a bit more structure and confidence in delivery, your responses can become much more impactful."
+      : "You completed the session, which is a great first step. However, there wasn't enough clear response data to give detailed feedback. Focus on speaking clearly and giving fuller answers next time.",
     strengths: hasContent
       ? [
           "You stayed engaged throughout the session and responded to the prompts",
           "You were able to express your ideas instead of staying silent or stuck",
-          "You’re building consistency by completing practice sessions",
+          "You're building consistency by completing practice sessions",
         ]
       : [
           "You showed up and completed the session",
-          "You’re starting to get comfortable with the practice environment",
+          "You're starting to get comfortable with the practice environment",
         ],
     improvements: hasContent
       ? [
@@ -56,6 +64,10 @@ function buildFallbackFeedback(transcriptText: string): FeedbackJson {
   };
 }
 
+/**
+ * Ensures the model output matches the expected feedback shape.
+ * If anything is missing or malformed, fallback values are used.
+ */
 function normalizeFeedback(raw: unknown, transcriptText: string): FeedbackJson {
   const fallback = buildFallbackFeedback(transcriptText);
 
@@ -100,10 +112,14 @@ function normalizeFeedback(raw: unknown, transcriptText: string): FeedbackJson {
   };
 }
 
-export async function analyzeSession(sessionId: string, offlineContext?: string) {
+/**
+ * Analyzes one session and saves normalized feedback into the feedback table.
+ */
+export async function analyzeSession(sessionId: string) {
   try {
     console.log("Analyzing session:", sessionId);
 
+    // Fetch the session
     const { data: session, error: sessionError } = await supabaseAdmin
       .from("sessions")
       .select("id, compact_transcript, participant_id, assignment_id, title")
@@ -114,8 +130,10 @@ export async function analyzeSession(sessionId: string, offlineContext?: string)
       throw new Error(sessionError?.message || "Session not found");
     }
 
+    // Prefer compact transcript stored on the session
     let transcriptText = session.compact_transcript ?? "";
 
+    // If compact transcript is missing, fallback to the transcripts table
     if (!transcriptText.trim()) {
       const { data: transcriptRow, error: transcriptError } = await supabaseAdmin
         .from("transcripts")
@@ -134,15 +152,17 @@ export async function analyzeSession(sessionId: string, offlineContext?: string)
 
     let feedbackJson: FeedbackJson;
 
+    // If no transcript exists, skip model call and use fallback feedback
     if (!hasTranscript) {
       feedbackJson = buildFallbackFeedback(transcriptText);
     } else {
       let participantContext = "";
       let assignmentContext = "";
 
+      // Fetch participant context to personalize the coaching feedback
       const { data: participantProfile } = await supabaseAdmin
         .from("profiles")
-        .select("full_name, job_goal, support_notes, coach_notes")
+        .select("full_name, job_goal, participant_condition, coach_notes")
         .eq("user_id", session.participant_id)
         .maybeSingle();
 
@@ -150,12 +170,13 @@ export async function analyzeSession(sessionId: string, offlineContext?: string)
         participantContext = `
 Participant info:
 - Name: ${participantProfile.full_name || "Not provided"}
-- Job goal: ${participantProfile.job_goal || "Not provided"}
-- Support notes: ${participantProfile.support_notes || "Not provided"}
+- Overall job goal: ${participantProfile.job_goal || "Not provided"}
 - Coach notes: ${participantProfile.coach_notes || "Not provided"}
+- Participant condition/notes: ${participantProfile.participant_condition || "Not provided"}
 `.trim();
       }
 
+      // Fetch assignment context if this session came from an assignment
       if (session.assignment_id) {
         const { data: assignment } = await supabaseAdmin
           .from("session_assignments")
@@ -173,6 +194,7 @@ Assignment info:
         }
       }
 
+      // Prompt sent to OpenAI
       const prompt = `
 You are a supportive interview coach for neurodiverse users.
 
@@ -185,9 +207,9 @@ Required JSON shape:
   "improvements": ["...", "..."],
   "next_step": "...",
   "scores": {
-    "clarity": 8,
-    "confidence": 7,
-    "relevance": 8
+    "clarity": ?,
+    "confidence": ?,
+    "relevance": ?
   }
 }
 
@@ -197,22 +219,24 @@ Rules:
 - Make the feedback feel helpful and human, like a coach.
 - Be concrete and actionable.
 - Keep strengths and improvements concise.
-- Scores must be integers between 1 and 10.
+- Scores must be integers between 1 and 10, be realistic and strict on the scoring.
 - Base the feedback on the transcript first, then use participant and assignment context when relevant.
+- If the transcript is very short or low quality, focus on general encouragement and tips for improvement instead of specific feedback.
+- Use the participant's overall job goal to make feedback more relevant to the type of role they are targeting.
+- Use coach notes and participant condition to adjust your tone and level of support appropriately.
 
 ${participantContext}
 
 ${assignmentContext}
-
-${offlineContext || ""}
 
 Transcript:
 ${transcriptText}
 `;
 
       try {
+        // Ask the model to generate structured JSON feedback
         const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
+          model: "gpt-4.1-mini",
           temperature: 0.3,
           response_format: { type: "json_object" },
           messages: [
@@ -237,11 +261,13 @@ ${transcriptText}
         const parsed = JSON.parse(raw) as unknown;
         feedbackJson = normalizeFeedback(parsed, transcriptText);
       } catch (openaiError: unknown) {
+        // If OpenAI fails, use fallback feedback instead of crashing
         console.error("OpenAI analysis failed, using fallback:", openaiError);
         feedbackJson = buildFallbackFeedback(transcriptText);
       }
     }
 
+    // Check whether feedback already exists for this session
     const { data: existingFeedback, error: existingFeedbackError } =
       await supabaseAdmin
         .from("feedback")
@@ -253,6 +279,7 @@ ${transcriptText}
       throw new Error(existingFeedbackError.message);
     }
 
+    // Update existing feedback or insert new feedback
     if (existingFeedback) {
       const { error: updateError } = await supabaseAdmin
         .from("feedback")
@@ -282,6 +309,7 @@ ${transcriptText}
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Unknown analyzeSession error";
+
     console.error("analyzeSession error:", message);
     throw error;
   }

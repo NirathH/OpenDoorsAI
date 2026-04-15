@@ -2,51 +2,103 @@ import { NextResponse } from "next/server";
 import { HumeClient } from "hume";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+/**
+ * This route must run on Node.js because it uses
+ * server-side SDKs and environment variables.
+ */
 export const runtime = "nodejs";
 
+/**
+ * POST /api/...
+ *
+ * Purpose:
+ * - Receive a sessionId
+ * - Find the session's recording
+ * - Generate a temporary signed URL for that recording
+ * - Send the file to Hume for analysis
+ * - Return the Hume jobId
+ */
 export async function POST(req: Request) {
   try {
+    // Read request body
     const { sessionId } = await req.json();
 
+    // Validate required input
     if (!sessionId) {
-      return NextResponse.json({ error: "sessionId required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "sessionId required" },
+        { status: 400 }
+      );
     }
 
-    const { data: rec, error: recErr } = await supabaseAdmin
+    /**
+     * Step 1:
+     * Find the recording linked to this session
+     */
+    const { data: recording, error: recordingError } = await supabaseAdmin
       .from("recordings")
       .select("storage_path")
       .eq("session_id", sessionId)
       .single();
 
-    if (recErr || !rec?.storage_path) {
-      return NextResponse.json({ error: "Recording not found" }, { status: 404 });
+    if (recordingError || !recording?.storage_path) {
+      return NextResponse.json(
+        { error: "Recording not found" },
+        { status: 404 }
+      );
     }
 
-    // Get a temporary signed URL to let Hume download the file
-    const { data: signed, error: signedErr } = await supabaseAdmin.storage
-      .from("recordings")
-      .createSignedUrl(rec.storage_path, 3600);
+    /**
+     * Step 2:
+     * Create a temporary signed URL so Hume can download the file
+     * from Supabase Storage
+     */
+    const { data: signedUrlData, error: signedUrlError } =
+      await supabaseAdmin.storage
+        .from("recordings")
+        .createSignedUrl(recording.storage_path, 3600);
 
-    if (signedErr || !signed?.signedUrl) {
-      return NextResponse.json({ error: "Signed URL generation failed" }, { status: 500 });
+    if (signedUrlError || !signedUrlData?.signedUrl) {
+      return NextResponse.json(
+        { error: "Signed URL generation failed" },
+        { status: 500 }
+      );
     }
 
+    /**
+     * Step 3:
+     * Create Hume client
+     */
     const client = new HumeClient({
       apiKey: process.env.HUME_API_KEY!,
     });
 
+    /**
+     * Step 4:
+     * Start a Hume batch inference job using the signed file URL
+     */
     const job = await client.expressionMeasurement.batch.startInferenceJob({
-      urls: [signed.signedUrl],
+      urls: [signedUrlData.signedUrl],
       models: {
         face: {},
         prosody: {},
-        language: {}
-      }
+        language: {},
+      },
     });
 
-    return NextResponse.json({ jobId: job.jobId });
+    /**
+     * Step 5:
+     * Return the created Hume job ID
+     */
+    return NextResponse.json({
+      jobId: job.jobId,
+    });
   } catch (error: any) {
     console.error("Hume batch start error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
   }
 }

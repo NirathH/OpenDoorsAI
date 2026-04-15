@@ -2,18 +2,31 @@ export const dynamic = "force-dynamic";
 
 import Link from "next/link";
 import { ArrowLeft, UserPlus } from "lucide-react";
+
 import InstructorSidebar from "@/components/InstructorSidebar";
 import { requireInstructor } from "@/lib/server/auth/requireInstructor";
 
+/**
+ * New student page for instructors.
+ *
+ * Purpose:
+ * - Verify the current user is an instructor
+ * - Show a form to create a new student account
+ * - Submit the form to the backend route that creates the student
+ */
 export default async function NewStudentPage() {
+  // Ensure the current user is an instructor
   const { instructorName } = await requireInstructor();
 
   return (
     <div className="min-h-screen bg-brand-light font-sans flex">
+      {/* Left sidebar navigation */}
       <InstructorSidebar name={instructorName} />
 
+      {/* Main content */}
       <main className="flex-1 min-w-0 p-6 md:p-8">
         <div className="max-w-[900px] mx-auto">
+          {/* Back link */}
           <div className="mb-6">
             <Link
               href="/instructor/students"
@@ -24,7 +37,9 @@ export default async function NewStudentPage() {
             </Link>
           </div>
 
+          {/* Create student form card */}
           <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
+            {/* Header */}
             <div className="flex items-center gap-3 mb-6">
               <div className="h-12 w-12 rounded-2xl bg-brand-light border-2 border-brand-muted flex items-center justify-center text-brand-primary">
                 <UserPlus size={22} />
@@ -40,15 +55,13 @@ export default async function NewStudentPage() {
               </div>
             </div>
 
+            {/* Form submits to backend route */}
             <form
               action="/api/instructor/students"
               method="POST"
               className="space-y-6"
             >
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Full Name
-                </label>
+              <FormField label="Full Name">
                 <input
                   name="full_name"
                   type="text"
@@ -56,12 +69,9 @@ export default async function NewStudentPage() {
                   className="w-full rounded-2xl border-2 border-brand-muted bg-white px-4 py-3 text-sm font-medium text-gray-800 outline-none focus:border-brand-primary"
                   placeholder="Student full name"
                 />
-              </div>
+              </FormField>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email
-                </label>
+              <FormField label="Email">
                 <input
                   name="email"
                   type="email"
@@ -69,12 +79,9 @@ export default async function NewStudentPage() {
                   className="w-full rounded-2xl border-2 border-brand-muted bg-white px-4 py-3 text-sm font-medium text-gray-800 outline-none focus:border-brand-primary"
                   placeholder="student@email.com"
                 />
-              </div>
+              </FormField>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Temporary Password
-                </label>
+              <FormField label="Temporary Password">
                 <input
                   name="password"
                   type="text"
@@ -84,34 +91,30 @@ export default async function NewStudentPage() {
                   placeholder="At least 8 characters"
                 />
                 <p className="mt-2 text-xs text-gray-500 font-medium">
-                  The student can use this password to log in and change it later.
+                  The student can use this password to log in and change it
+                  later.
                 </p>
-              </div>
+              </FormField>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Job Goal
-                </label>
+              <FormField label="Job Goal">
                 <input
                   name="job_goal"
                   type="text"
                   className="w-full rounded-2xl border-2 border-brand-muted bg-white px-4 py-3 text-sm font-medium text-gray-800 outline-none focus:border-brand-primary"
                   placeholder="Example: Customer service representative"
                 />
-              </div>
+              </FormField>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Notes
-                </label>
+              <FormField label="Notes">
                 <textarea
                   name="coach_notes"
                   rows={4}
                   className="w-full rounded-2xl border-2 border-brand-muted bg-white px-4 py-3 text-sm font-medium text-gray-800 outline-none focus:border-brand-primary resize-none"
                   placeholder="Optional instructor-only notes."
                 />
-              </div>
+              </FormField>
 
+              {/* Actions */}
               <div className="pt-2 flex flex-wrap gap-3">
                 <button
                   type="submit"
@@ -131,6 +134,26 @@ export default async function NewStudentPage() {
           </section>
         </div>
       </main>
+    </div>
+  );
+}
+
+/**
+ * Reusable form field wrapper for labels + inputs.
+ */
+function FormField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-semibold text-gray-700 mb-2">
+        {label}
+      </label>
+      {children}
     </div>
   );
 }

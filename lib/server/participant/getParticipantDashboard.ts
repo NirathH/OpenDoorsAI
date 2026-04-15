@@ -1,9 +1,17 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
+/**
+ * Gets the main participant dashboard data:
+ * - profile basics
+ * - assignments
+ * - completed sessions
+ * - quick dashboard stats
+ */
 export async function getParticipantDashboard(
   supabase: SupabaseClient,
   participantId: string
 ) {
+  // Fetch the participant profile info
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("full_name, job_goal, coach_notes")
@@ -14,6 +22,7 @@ export async function getParticipantDashboard(
     throw new Error(profileError.message);
   }
 
+  // Fetch assignments for this participant
   const { data: assignments, error: assignmentsError } = await supabase
     .from("session_assignments")
     .select("id, title, goal, instructions, status, due_at, created_at")
@@ -24,6 +33,7 @@ export async function getParticipantDashboard(
     throw new Error(assignmentsError.message);
   }
 
+  // Fetch sessions for this participant
   const { data: sessions, error: sessionsError } = await supabase
     .from("sessions")
     .select("id, title, status, ended_at, created_at")
@@ -37,12 +47,15 @@ export async function getParticipantDashboard(
   const allAssignments = assignments ?? [];
   const allSessions = sessions ?? [];
 
+  // Assignments the participant still needs to work on
   const pendingAssignments = allAssignments.filter(
-    (a) => a.status === "assigned" || a.status === "in_progress"
+    (assignment) =>
+      assignment.status === "assigned" || assignment.status === "in_progress"
   );
 
+  // Sessions that were completed
   const completedSessions = allSessions.filter(
-    (s) => s.status === "completed"
+    (session) => session.status === "completed"
   );
 
   const latestCompleted = completedSessions[0] ?? null;

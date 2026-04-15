@@ -1,6 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Sparkles, MessageSquare, TrendingUp, ShieldCheck, Clock, CheckCircle2 } from "lucide-react";
+import {
+  Play,
+  Sparkles,
+  MessageSquare,
+  TrendingUp,
+  ShieldCheck,
+  Clock,
+  CheckCircle2,
+} from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -13,17 +21,18 @@ export default function LandingPage() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border-2 border-brand-muted bg-white text-sm font-semibold text-gray-700">
               <Sparkles size={16} className="text-brand-primary" />
-              AI practice that feels like a real session
+              AI coaching for work and real conversations
             </div>
 
             <h1 className="mt-5 text-4xl md:text-5xl font-extrabold tracking-tight">
-              Practice interviews and communication{" "}
-              <span className="text-brand-primary">without pressure</span>.
+              Build confidence for work, coaching, and{" "}
+              <span className="text-brand-primary">real-life communication</span>.
             </h1>
 
             <p className="mt-4 text-lg text-gray-600 font-medium leading-relaxed max-w-xl">
-              OpenDoorsAI helps you practice speaking, get instant feedback, track progress, and improve confidence —
-              with coach-style guidance and clear next steps.
+              OpenDoorsAI helps people practice job-related and everyday speaking
+              scenarios, get clear feedback, and improve over time with guided
+              coaching.
             </p>
 
             <div className="mt-7 flex flex-col sm:flex-row gap-3">
@@ -32,7 +41,7 @@ export default function LandingPage() {
                 className="inline-flex items-center justify-center gap-2 bg-brand-secondary hover:bg-brand-primary text-white font-semibold py-4 px-6 rounded-xl transition-colors shadow-md"
               >
                 <Play size={18} />
-                Start Free Practice
+                Start Practicing
               </Link>
 
               <Link
@@ -45,8 +54,8 @@ export default function LandingPage() {
 
             <div className="mt-6 flex flex-wrap gap-3">
               <MiniBadge icon={<ShieldCheck size={16} />} text="Private recordings" />
-              <MiniBadge icon={<Clock size={16} />} text="Fast feedback" />
-              <MiniBadge icon={<TrendingUp size={16} />} text="Progress tracking" />
+              <MiniBadge icon={<Clock size={16} />} text="Quick feedback" />
+              <MiniBadge icon={<TrendingUp size={16} />} text="Track growth" />
             </div>
           </div>
 
@@ -64,54 +73,59 @@ export default function LandingPage() {
                 </div>
                 <div>
                   <div className="text-lg font-extrabold">Your next session</div>
-                  <div className="text-sm text-gray-600 font-medium">“Tell me about yourself”</div>
+                  <div className="text-sm text-gray-600 font-medium">
+                    “Practice a workplace conversation”
+                  </div>
                 </div>
               </div>
 
               <div className="relative mt-6 grid gap-4">
                 <StepRow
                   icon={<MessageSquare className="text-brand-primary" size={18} />}
-                  title="Live questions"
-                  desc="You get prompts like a real interview."
+                  title="Practice scenarios"
+                  desc="Work, coaching, and everyday communication prompts."
                 />
                 <StepRow
                   icon={<Sparkles className="text-brand-primary" size={18} />}
-                  title="Instant feedback"
-                  desc="Clarity, confidence, filler words, structure."
+                  title="Clear feedback"
+                  desc="Support on confidence, clarity, and response quality."
                 />
                 <StepRow
                   icon={<TrendingUp className="text-brand-primary" size={18} />}
-                  title="Track improvement"
-                  desc="See progress over time and focus areas."
+                  title="See progress"
+                  desc="Track improvement and focus on next steps."
                 />
               </div>
 
               <div className="relative mt-7 rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5">
-                <div className="text-xs font-semibold text-gray-600 mb-1">Example feedback</div>
+                <div className="text-xs font-semibold text-gray-600 mb-1">
+                  Example feedback
+                </div>
                 <div className="text-gray-900 font-semibold">
-                  “Great energy. Next: slow down slightly and answer with a 3-part structure.”
+                  “Good effort. Next, slow down and make your response more clear
+                  and structured.”
                 </div>
                 <div className="mt-3 flex gap-2 flex-wrap">
-                  <Tag>Confidence +2</Tag>
-                  <Tag>Filler Words</Tag>
+                  <Tag>Confidence</Tag>
+                  <Tag>Clarity</Tag>
                   <Tag>Structure</Tag>
                 </div>
               </div>
             </div>
 
             <p className="mt-4 text-sm text-gray-600 font-medium text-center">
-              Built for students, job seekers, and anyone improving communication.
+              Built for job seekers, students, and people building communication skills.
             </p>
           </div>
         </div>
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="max-w-[1400px] mx-auto px-6 md:px-8 py-10">
+      <section id="how" className="max-w-[1400px] mx-auto px-6 md:px-8 py-10">
         <div className="text-center">
           <h2 className="text-3xl font-extrabold">How it works</h2>
           <p className="mt-2 text-gray-600 font-medium">
-            Simple flow. Real improvement.
+            Practice, feedback, improvement.
           </p>
         </div>
 
@@ -119,40 +133,40 @@ export default function LandingPage() {
           <FeatureCard
             icon={<Play size={22} className="text-brand-primary" />}
             title="Start a session"
-            text="Pick a goal (interview, eye contact, clarity) and begin practicing."
+            text="Choose a goal like employment coaching, communication, or conversation practice."
           />
           <FeatureCard
             icon={<MessageSquare size={22} className="text-brand-primary" />}
-            title="Answer prompts"
-            text="Respond to live questions like a real conversation."
+            title="Respond to prompts"
+            text="Practice realistic scenarios with guided AI support."
           />
           <FeatureCard
             icon={<TrendingUp size={22} className="text-brand-primary" />}
-            title="Get feedback + track progress"
-            text="Actionable tips, scores, and trends so you know what to fix next."
+            title="Get feedback"
+            text="See what went well, what to improve, and what to practice next."
           />
         </div>
       </section>
 
       {/* FEATURES */}
-      <section className="max-w-[1400px] mx-auto px-6 md:px-8 py-10">
+      <section id="features" className="max-w-[1400px] mx-auto px-6 md:px-8 py-10">
         <div className="grid lg:grid-cols-2 gap-6">
           <BigCard
             title="Participant features"
             points={[
-              "Practice sessions with live AI questions",
-              "Feedback summary + improvement steps",
-              "Progress dashboard (scores, trends, streaks)",
-              "Personal goals (what you want to improve)",
+              "Practice work and conversation scenarios",
+              "Simple feedback and next steps",
+              "Progress dashboard with trends and streaks",
+              "Personal goals and coaching support",
             ]}
           />
           <BigCard
             title="Instructor / Coach features"
             points={[
-              "View session results and progress",
-              "Leave notes and assign practice tasks",
-              "See patterns: confidence, filler words, pacing",
-              "Support cohorts / programs (later)",
+              "View session results and participant progress",
+              "Leave notes and assign practice sessions",
+              "Support communication and employment goals",
+              "Guide growth over time",
             ]}
           />
         </div>
@@ -166,7 +180,7 @@ export default function LandingPage() {
 
           <h3 className="relative text-3xl font-extrabold">Ready to practice?</h3>
           <p className="relative mt-2 text-gray-600 font-medium">
-            Create an account and run your first session in minutes.
+            Start a session and build confidence step by step.
           </p>
 
           <div className="relative mt-6 flex flex-col sm:flex-row gap-3 justify-center">
@@ -174,7 +188,7 @@ export default function LandingPage() {
               href="/register"
               className="inline-flex items-center justify-center gap-2 bg-brand-secondary hover:bg-brand-primary text-white font-semibold py-4 px-6 rounded-xl transition-colors shadow-md"
             >
-              Start Free Practice
+              Start Practicing
             </Link>
             <Link
               href="/dashboard"

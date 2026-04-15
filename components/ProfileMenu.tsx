@@ -67,7 +67,7 @@ export default function ProfileMenu({
 
           <div className="p-2">
             <Link
-              href="/profile"
+              href="/participant/profile"
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-brand-light/60"
             >

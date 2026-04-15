@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export async function getParticipantProfile(
   supabase: SupabaseClient,
@@ -25,11 +26,16 @@ export async function getParticipantProfile(
   let instructorName = "Not assigned yet";
 
   if (profile.instructor_id) {
-    const { data: instructorProfile } = await supabase
-      .from("profiles")
-      .select("full_name")
-      .eq("user_id", profile.instructor_id)
-      .maybeSingle();
+    const { data: instructorProfile, error: instructorError } =
+      await supabaseAdmin
+        .from("profiles")
+        .select("full_name")
+        .eq("user_id", profile.instructor_id)
+        .maybeSingle();
+
+    if (instructorError) {
+      throw new Error(instructorError.message);
+    }
 
     if (instructorProfile?.full_name) {
       instructorName = instructorProfile.full_name;

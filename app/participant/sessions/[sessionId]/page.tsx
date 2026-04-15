@@ -1,35 +1,21 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
 import {
   ChevronLeft,
   CalendarDays,
   Clock3,
   CheckCircle2,
-  FileText,
-  MessageSquareText,
   User,
 } from "lucide-react";
 import Navbar from "@/components/participantNavbar";
-import { createSupabaseServer } from "@/lib/supabaseServer";
+import { requireParticipant } from "@/lib/server/auth/requireParticipant";
+import { getParticipantSessionDetails } from "@/lib/server/participant/getParticipantSessionDetails";
 
 type PageProps = {
   params: Promise<{
     sessionId: string;
   }>;
-};
-
-type FeedbackData = {
-  summary?: string;
-  strengths?: string[];
-  improvements?: string[];
-  next_step?: string;
-  scores?: {
-    clarity?: number;
-    confidence?: number;
-    relevance?: number;
-  };
 };
 
 function formatDate(dateString: string | null) {
@@ -44,123 +30,19 @@ function formatDuration(seconds: number | null) {
   return `${mins}m ${secs}s`;
 }
 
-function parseTranscriptBlocks(transcriptText: string) {
-  return transcriptText
-    .split("\n\n")
-    .map((block) => {
-      const lines = block.split("\n");
-
-      const question =
-        lines.find((line) => line.startsWith("Q:"))?.replace("Q:", "").trim() ||
-        "";
-
-      const answer =
-        lines.find((line) => line.startsWith("A:"))?.replace("A:", "").trim() ||
-        "";
-
-      const emotion =
-        lines.find((line) => line.startsWith("E:"))?.replace("E:", "").trim() ||
-        "";
-
-      return { question, answer, emotion };
-    })
-    .filter((item) => item.question || item.answer);
-}
-
 export default async function ParticipantSessionDetailsPage({
   params,
 }: PageProps) {
   const { sessionId } = await params;
 
-  const supabase = await createSupabaseServer();
-  const { data: authData } = await supabase.auth.getUser();
+  const { supabase, participantId, participantName } = await requireParticipant();
 
-  if (!authData.user) redirect("/login");
-  if (authData.user.role === "instructor") redirect("/login");
-
-  const userId = authData.user.id;
-  const fullName = authData.user.user_metadata?.full_name || "User";
-
-  const { data: session, error: sessionError } = await supabase
-    .from("sessions")
-    .select(
-      `
-        id,
-        participant_id,
-        assignment_id,
-        title,
-        status,
-        ended_at,
-        created_at,
-        duration_seconds
-      `
-    )
-    .eq("id", sessionId)
-    .eq("participant_id", userId)
-    .single();
-
-  if (sessionError || !session) {
-    notFound();
-  }
-
-  const { data: transcript } = await supabase
-    .from("transcripts")
-    .select("transcript_text")
-    .eq("session_id", sessionId)
-    .maybeSingle();
-
-  const { data: feedback } = await supabase
-    .from("feedback")
-    .select("feedback_json")
-    .eq("session_id", sessionId)
-    .maybeSingle();
-
-  let instructorName = "Instructor not available";
-
-  let audioUrl: string | null = null;
-  const { data: rec } = await supabase
-    .from("recordings")
-    .select("storage_path")
-    .eq("session_id", sessionId)
-    .maybeSingle();
-
-  if (rec?.storage_path) {
-    const { data: signed } = await supabase.storage
-      .from("recordings")
-      .createSignedUrl(rec.storage_path, 3600); // 1 hour
-    if (signed?.signedUrl) {
-      audioUrl = signed.signedUrl;
-    }
-  }
-  if (session.assignment_id) {
-    const { data: assignment } = await supabase
-      .from("session_assignments")
-      .select("instructor_id")
-      .eq("id", session.assignment_id)
-      .maybeSingle();
-
-    if (assignment?.instructor_id) {
-      const { data: instructorProfile } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("user_id", assignment.instructor_id)
-        .maybeSingle();
-
-      if (instructorProfile?.full_name) {
-        instructorName = instructorProfile.full_name;
-      }
-    }
-  }
-
-  const transcriptBlocks = transcript?.transcript_text
-    ? parseTranscriptBlocks(transcript.transcript_text)
-    : [];
-
-  const feedbackData = (feedback?.feedback_json || null) as FeedbackData | null;
+  const { session, transcriptBlocks, feedbackData, instructorName } =
+    await getParticipantSessionDetails(supabase, participantId, sessionId);
 
   return (
     <div className="min-h-screen bg-brand-light font-sans">
-      <Navbar userName={fullName} userRole="Participant" />
+      <Navbar userName={participantName} userRole="Participant" />
 
       <main className="max-w-[1000px] mx-auto p-6 md:p-8">
         <div className="mb-8 flex flex-col gap-4">
@@ -206,18 +88,8 @@ export default async function ParticipantSessionDetailsPage({
                 value={instructorName}
               />
             </div>
-            {audioUrl && (
-              <div className="mt-6 pt-6 border-t-2 border-brand-muted">
-                <div className="text-sm font-semibold text-gray-700 mb-3 ml-2 flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-brand-primary"></div>
-                  Session Recording
-                </div>
-                <audio controls className="w-full rounded-full" src={audioUrl}>
-                  Your browser does not support the audio element.
-                </audio>
-              </div>
-            )}
           </ExpandableSection>
+
           <ExpandableSection title="Feedback" defaultOpen={true}>
             {feedbackData ? (
               <div className="space-y-5">
@@ -333,8 +205,6 @@ export default async function ParticipantSessionDetailsPage({
               <EmptyState text="No transcript available yet." />
             )}
           </ExpandableSection>
-
-          
         </div>
       </main>
     </div>
