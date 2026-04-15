@@ -4,8 +4,7 @@ dotenv.config({ path: ".env.local" });
 
 async function main() {
   const client = new HumeClient({
-    apiKey: process.env.HUME_API_KEY,
-    secretKey: process.env.HUME_SECRET_KEY,
+    apiKey: process.env.HUME_API_KEY || "",
   });
 
   try {

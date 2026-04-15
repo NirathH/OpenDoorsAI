@@ -1,8 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import InstructorSidebar from "@/components/InstructorSidebar";
-import StudentTable from "@/components/StudentTable";
-import StudentProgressPanel from "@/components/StudentProgressPanel";
+import DashboardClient from "./DashboardClient";
 import { requireInstructor } from "@/lib/server/auth/requireInstructor";
 import { getInstructorStudents } from "@/lib/server/instructor/getInstructorStudents";
 import { formatShortDate } from "@/lib/utils/studentHelpers";
@@ -13,12 +12,14 @@ type StudentTableRow = {
   lastSession: string;
   streak: string;
   status: string;
+  totalSessions: number;
+  avgScore: number;
 };
 
 export default async function InstructorDashboardPage() {
   const { supabase, instructorId, instructorName } = await requireInstructor();
 
-  const { rows, stats } = await getInstructorStudents(supabase, instructorId);
+  const { rows } = await getInstructorStudents(supabase, instructorId);
 
   const students: StudentTableRow[] = rows.map((student) => ({
     id: student.user_id,
@@ -31,6 +32,8 @@ export default async function InstructorDashboardPage() {
         ? `${student.streak_days} day${student.streak_days > 1 ? "s" : ""}`
         : "0 days",
     status: student.derived_status,
+    totalSessions: student.total_sessions,
+    avgScore: student.avg_score,
   }));
 
   return (
@@ -46,16 +49,7 @@ export default async function InstructorDashboardPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
-            <StudentTable students={students} />
-
-            <StudentProgressPanel
-              totalStudents={stats.totalStudents}
-              activeStudents={stats.activeStudents}
-              needsAttention={stats.needsAttention}
-              inactiveStudents={stats.inactiveStudents}
-            />
-          </div>
+          <DashboardClient initialStudents={students} />
         </div>
       </main>
     </div>

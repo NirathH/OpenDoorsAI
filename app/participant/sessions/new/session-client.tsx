@@ -79,8 +79,8 @@ function buildCompactTranscript(messages: VoiceMessage[]) {
       const emotionText =
         topEmotions.length > 0
           ? topEmotions
-              .map((em) => `${em.name} ${Math.round(em.score * 100)}`)
-              .join(", ")
+            .map((em) => `${em.name} ${Math.round(em.score * 100)}`)
+            .join(", ")
           : "none";
 
       lines.push(
@@ -167,9 +167,14 @@ function SessionContent({ accessToken }: { accessToken: string }) {
   const [isFinished, setIsFinished] = useState(false);
   const [isSavingSession, setIsSavingSession] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  
+
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisMessage, setAnalysisMessage] = useState("");
+
+  const [isGeneratingPrompt, setIsGeneratingPrompt] = useState(true);
+  const [dynamicScenario, setDynamicScenario] = useState("");
+  const [dynamicSystemPrompt, setDynamicSystemPrompt] = useState("");
+  const [dynamicTips, setDynamicTips] = useState<string[]>([]);
 
   const typedMessages = messages as VoiceMessage[];
 
@@ -221,6 +226,41 @@ function SessionContent({ accessToken }: { accessToken: string }) {
   }, [camOn]);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function loadPrompt() {
+      try {
+        setIsGeneratingPrompt(true);
+        const res = await fetch("/api/sessions/generate-prompt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assignmentId, participantId })
+        });
+        
+        const data = await res.json();
+        
+        if (!cancelled && data.payload) {
+          setDynamicScenario(data.payload.scenario);
+          setDynamicSystemPrompt(data.payload.systemPrompt);
+          setDynamicTips(data.payload.quickTips);
+        }
+      } catch (err) {
+        console.error("Failed to load prompt", err);
+      } finally {
+        if (!cancelled) {
+          setIsGeneratingPrompt(false);
+        }
+      }
+    }
+
+    loadPrompt();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [assignmentId, participantId]);
+
+  useEffect(() => {
     if (!isRecording) return;
 
     const id = setInterval(() => setSeconds((s) => s + 1), 1000);
@@ -246,10 +286,10 @@ function SessionContent({ accessToken }: { accessToken: string }) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-        assignmentId: assignmentId ?? null,
-        title: "Practice Session",
-        humeConfigId: process.env.NEXT_PUBLIC_HUME_CONFIG_ID ?? null,
-      }),
+          assignmentId: assignmentId ?? null,
+          title: "Practice Session",
+          humeConfigId: process.env.NEXT_PUBLIC_HUME_CONFIG_ID ?? null,
+        }),
       });
 
       const createData: { sessionId?: string; error?: string } =
@@ -285,10 +325,13 @@ function SessionContent({ accessToken }: { accessToken: string }) {
         console.error("Could not capture audio for recording", err);
       }
 
-      await connect({
-        auth: { type: "accessToken", value: accessToken },
-        configId: process.env.NEXT_PUBLIC_HUME_CONFIG_ID || undefined,
-      });
+      await connect(
+        {
+          auth: { type: "accessToken", value: accessToken },
+          configId: process.env.NEXT_PUBLIC_HUME_CONFIG_ID || undefined,
+        },
+        { systemPrompt: dynamicSystemPrompt || undefined }
+      );
     } catch (err: unknown) {
       console.error(err);
       const message =
@@ -315,7 +358,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
       // Stop local recording and upload
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
         mediaRecorderRef.current.stop();
-        
+
         if (audioStreamRef.current) {
           audioStreamRef.current.getTracks().forEach((t) => t.stop());
           audioStreamRef.current = null;
@@ -409,7 +452,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
           const pollData = await pollRes.json();
 
           if (pollData.status === "COMPLETED" || pollData.status === "FAILED") {
-             break;
+            break;
           }
         }
       } catch (err) {
@@ -463,10 +506,10 @@ function SessionContent({ accessToken }: { accessToken: string }) {
               )}
 
               {isAnalyzing && (
-                 <div className="flex flex-col items-center mt-2 w-full">
-                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary mb-3"></div>
-                   <span className="text-sm text-brand-primary font-bold">{analysisMessage}</span>
-                 </div>
+                <div className="flex flex-col items-center mt-2 w-full">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-primary mb-3"></div>
+                  <span className="text-sm text-brand-primary font-bold">{analysisMessage}</span>
+                </div>
               )}
 
               <button
@@ -511,8 +554,8 @@ function SessionContent({ accessToken }: { accessToken: string }) {
               {isSavingSession
                 ? "Saving"
                 : isRecording
-                ? "Recording"
-                : status.value}
+                  ? "Recording"
+                  : status.value}
             </span>
             <span className="px-3 py-1.5 rounded-full text-xs font-extrabold border-2 border-brand-muted bg-white text-gray-900">
               {formatTime(seconds)}
@@ -580,11 +623,13 @@ function SessionContent({ accessToken }: { accessToken: string }) {
               {!isRecording ? (
                 <button
                   onClick={startRecording}
-                  disabled={status.value === "connecting" || isSavingSession}
+                  disabled={status.value === "connecting" || isSavingSession || isGeneratingPrompt}
                   className="flex-1 inline-flex items-center justify-center gap-2 bg-brand-secondary hover:bg-brand-primary disabled:opacity-50 text-white font-extrabold py-4 rounded-xl transition-colors shadow-md"
                 >
                   <CircleDot size={18} />
-                  {status.value === "connecting"
+                  {isGeneratingPrompt
+                    ? "Preparing Scenario..."
+                    : status.value === "connecting"
                     ? "Connecting..."
                     : "Start Conversation"}
                 </button>
@@ -614,17 +659,16 @@ function SessionContent({ accessToken }: { accessToken: string }) {
             <div className="text-xs font-semibold text-gray-600 mb-1">
               Prompt
             </div>
-            <div className="text-gray-900 font-extrabold">
-              “You just arrived for your shift, and your manager gave you three tasks: fold the clean towels, sweep the breakroom, and restock the front display. Walk me through how you would organize your time to get these done.”
-            </div>
-            <div className="mt-3 text-sm text-gray-700 font-medium leading-relaxed">
-              Think about priorities:
-              <ul className="list-disc ml-5 mt-2 space-y-1">
-                <li>Which task is most urgent?</li>
-                <li>How can you be efficient?</li>
-                <li>Can any tasks be combined?</li>
-              </ul>
-            </div>
+            {isGeneratingPrompt ? (
+               <div className="flex items-center gap-3 text-gray-500 font-medium py-3">
+                 <div className="animate-spin h-5 w-5 border-2 border-brand-primary border-t-transparent rounded-full" />
+                 Crafting scenario...
+               </div>
+            ) : (
+               <div className="text-gray-900 font-extrabold text-[15px] leading-relaxed">
+                 {dynamicScenario}
+               </div>
+            )}
           </div>
 
           <div className="mt-6">
@@ -632,9 +676,11 @@ function SessionContent({ accessToken }: { accessToken: string }) {
               Quick tips
             </div>
             <div className="mt-3 space-y-2">
-              <Tip text="Slow down slightly — clarity beats speed." />
-              <Tip text="Pause instead of saying ‘um’." />
-              <Tip text="End with a confident closing sentence." />
+              {isGeneratingPrompt ? (
+                <div className="text-gray-500 text-sm font-medium py-1">Loading tips...</div>
+              ) : (
+                dynamicTips.map((tip, idx) => <Tip key={idx} text={tip} />)
+              )}
             </div>
           </div>
 

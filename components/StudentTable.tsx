@@ -1,7 +1,7 @@
 import { User } from "lucide-react";
 
 interface Student {
-  id: number;
+  id: string;
   name: string;
   lastSession: string;
   streak: string;
@@ -10,8 +10,12 @@ interface Student {
 
 export default function StudentTable({
   students,
+  onSelectStudent,
+  selectedStudentId,
 }: {
   students: Student[];
+  onSelectStudent?: (id: string) => void;
+  selectedStudentId?: string | null;
 }) {
   return (
     <div className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm overflow-hidden">
@@ -37,7 +41,12 @@ export default function StudentTable({
             {students.map((student) => (
               <tr
                 key={student.id}
-                className="border-t border-brand-muted/60 hover:bg-brand-light/30 transition-colors"
+                onClick={() => onSelectStudent?.(student.id)}
+                className={`border-t border-brand-muted/60 transition-colors cursor-pointer ${
+                  selectedStudentId === student.id
+                    ? "bg-brand-primary/10 hover:bg-brand-primary/10"
+                    : "hover:bg-brand-light/30"
+                }`}
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
