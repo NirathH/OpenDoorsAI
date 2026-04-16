@@ -17,9 +17,7 @@ type FeedbackJson = {
 };
 
 // Create OpenAI client using server-side API key
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+// OpenAI is instantiated dynamically inside the function below
 
 /**
  * Builds safe fallback feedback when the transcript is missing
@@ -115,7 +113,7 @@ function normalizeFeedback(raw: unknown, transcriptText: string): FeedbackJson {
 /**
  * Analyzes one session and saves normalized feedback into the feedback table.
  */
-export async function analyzeSession(sessionId: string) {
+export async function analyzeSession(sessionId: string, offlineContext?: string) {
   try {
     console.log("Analyzing session:", sessionId);
 
@@ -229,12 +227,18 @@ ${participantContext}
 
 ${assignmentContext}
 
+${offlineContext ? `Additional Emotional Context from Analysis of Audio:\n${offlineContext}\n` : ""}
+
 Transcript:
 ${transcriptText}
 `;
 
       try {
-        // Ask the model to generate structured JSON feedback
+        const openai = new OpenAI({
+          apiKey: process.env.OPENAI_API_KEY!,
+        });
+
+        // 1) Get AI Feedback
         const completion = await openai.chat.completions.create({
           model: "gpt-4.1-mini",
           temperature: 0.3,

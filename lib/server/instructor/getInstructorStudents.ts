@@ -43,6 +43,7 @@ export async function getInstructorStudents(
   const studentIds = students.map((student: { user_id: string }) => student.user_id);
 
   // Default to empty session list if no students exist
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let sessionsData: any[] = [];
 
   // Only query sessions if there are student ids

@@ -7,9 +7,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+export const dynamic = "force-dynamic";
 
 type GeneratedPromptPayload = {
   scenario: string;
@@ -27,7 +25,7 @@ export async function POST(req: NextRequest) {
     
     // Fetch Assignment Details
     if (assignmentId) {
-      const { data: assignment, error: assignmentError } = await supabase
+      const { data: assignment } = await supabase
         .from("session_assignments")
         .select("goal, instructions")
         .eq("id", assignmentId)
@@ -84,6 +82,10 @@ Output MUST be a valid JSON object matching this exact shape:
 - Quick tips should be short, practical 1-sentence pieces of advice (e.g. "Take a breath before answering," "Focus on answering exactly what was asked.").
 `;
 
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY!,
+    });
+
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini", // can be gpt-4o-mini or gpt-4.1-mini
       temperature: 0.7,
@@ -111,7 +113,7 @@ Output MUST be a valid JSON object matching this exact shape:
       scenario: parsed.scenario || "Welcome to your practice session. Read the goal carefully, then press Start to begin the mock interview.",
       systemPrompt: parsed.system_prompt || "You are a helpful and supportive AI interview coach conducting a mock interview. Be encouraging, ask clear questions one at a time, and listen patiently.",
       quickTips: Array.isArray(parsed.quick_tips) 
-        ? parsed.quick_tips.filter((t: any) => typeof t === "string").slice(0, 3)
+        ? parsed.quick_tips.filter((t: unknown) => typeof t === "string").slice(0, 3)
         : [
             "Take your time before answering.",
             "Speak clearly into the microphone.",

@@ -143,13 +143,14 @@ export async function POST(req: Request) {
       ok: true,
       storage_path,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("UPLOAD ERROR:", err);
 
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json(
       {
         ok: false,
-        error: err?.message || "Unknown error",
+        error: errorMessage,
       },
       { status: 500 }
     );

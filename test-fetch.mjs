@@ -1,4 +1,3 @@
-import fs from 'fs';
 
 async function main() {
     const key = process.env.HUME_API_KEY;

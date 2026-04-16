@@ -9,7 +9,7 @@ export async function getParticipantProfile(
   const { data: profile, error } = await supabase
     .from("profiles")
     .select(
-      "user_id, full_name, role, created_at, instructor_id, job_goal, coach_notes"
+      "user_id, full_name, role, created_at, instructor_id, job_goal, coach_notes, participant_condition"
     )
     .eq("user_id", participantId)
     .eq("role", "participant")

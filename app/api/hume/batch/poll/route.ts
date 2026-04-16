@@ -53,8 +53,24 @@ export async function POST(req: Request) {
        * Loop through deeply nested Hume response:
        * files → results → predictions → prosody → groupedPredictions → emotions
        */
+      interface HumeFile {
+        results?: {
+          predictions?: Array<{
+            models?: {
+              prosody?: {
+                groupedPredictions?: Array<{
+                  predictions?: Array<{
+                    emotions?: Array<{ name: string; score: number }>;
+                  }>;
+                }>;
+              };
+            };
+          }>;
+        };
+      }
+
       for (const file of predictions) {
-        for (const result of (file as any).results?.predictions || []) {
+        for (const result of (file as unknown as HumeFile)?.results?.predictions || []) {
           for (const grouped of result.models?.prosody?.groupedPredictions || []) {
             for (const pred of grouped.predictions || []) {
               for (const emotion of pred.emotions || []) {
@@ -109,11 +125,12 @@ export async function POST(req: Request) {
     else {
       return NextResponse.json({ status });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Hume batch poll error:", error);
 
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }

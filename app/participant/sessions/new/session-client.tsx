@@ -325,13 +325,11 @@ function SessionContent({ accessToken }: { accessToken: string }) {
         console.error("Could not capture audio for recording", err);
       }
 
-      await connect(
-        {
-          auth: { type: "accessToken", value: accessToken },
-          configId: process.env.NEXT_PUBLIC_HUME_CONFIG_ID || undefined,
-        },
-        { systemPrompt: dynamicSystemPrompt || undefined }
-      );
+      await connect({
+        auth: { type: "accessToken", value: accessToken },
+        configId: process.env.NEXT_PUBLIC_HUME_CONFIG_ID || undefined,
+        sessionSettings: dynamicSystemPrompt ? { type: "session_settings", systemPrompt: dynamicSystemPrompt } : undefined,
+      });
     } catch (err: unknown) {
       console.error(err);
       const message =

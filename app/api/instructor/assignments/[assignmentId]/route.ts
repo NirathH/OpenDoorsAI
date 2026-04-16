@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { requireInstructor } from "@/lib/server/auth/requireInstructor";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
-export async function POST(req: Request, { params }: any) {
-  const { assignmentId } = params;
+export async function POST(req: Request, { params }: { params: Promise<{ assignmentId: string }> }) {
+  const { assignmentId } = await params;
   const { instructorId } = await requireInstructor();
 
   const formData = await req.formData();

@@ -70,7 +70,7 @@ export default async function ProfilePage() {
             <DetailCard
               icon={<StickyNote size={18} />}
               label="Support Notes"
-              value={profile.support_notes || "Not added yet"}
+              value={profile.participant_condition || "Not added yet"}
             />
             <DetailCard
               icon={<StickyNote size={18} />}

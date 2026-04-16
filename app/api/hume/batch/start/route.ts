@@ -93,11 +93,12 @@ export async function POST(req: Request) {
     return NextResponse.json({
       jobId: job.jobId,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Hume batch start error:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
 
     return NextResponse.json(
-      { error: error.message },
+      { error: errorMessage },
       { status: 500 }
     );
   }

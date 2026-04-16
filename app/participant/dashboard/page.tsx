@@ -6,7 +6,6 @@ import {
   TrendingUp,
   Book,
   MessageSquare,
-  Eye,
   Award,
   ClipboardList,
 } from "lucide-react";
