@@ -9,6 +9,7 @@ import {
   CalendarDays,
   Play,
   FileText,
+  ChevronDown,
 } from "lucide-react";
 import Navbar from "@/components/participantNavbar";
 import { createSupabaseServer } from "@/lib/supabaseServer";
@@ -130,53 +131,70 @@ export default async function ParticipantSessionsPage() {
             ) : (
               <div className="space-y-4">
                 {assignedSessions.map((assignment) => (
-                  <div
+                  <details
                     key={assignment.id}
-                    className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5"
+                    className="group rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5"
                   >
-                    <h3 className="text-lg font-bold text-gray-900">
-                      {assignment.title}
-                    </h3>
+                    <summary className="list-none cursor-pointer">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-lg font-bold text-gray-900">
+                            {assignment.title}
+                          </h3>
 
-                    {assignment.goal && (
-                      <p className="mt-3 text-sm text-gray-700">
-                        <span className="font-semibold">Goal:</span>{" "}
-                        {assignment.goal}
-                      </p>
-                    )}
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <InfoPill
+                              icon={<Clock3 size={14} />}
+                              text={`${assignment.max_minutes ?? 5} min max`}
+                            />
+                            <InfoPill
+                              icon={<CalendarDays size={14} />}
+                              text={
+                                assignment.due_at
+                                  ? `Due ${formatDate(assignment.due_at)}`
+                                  : "No due date"
+                              }
+                            />
+                            <StatusPill status={assignment.status} />
+                          </div>
+                        </div>
 
-                    {assignment.instructions && (
-                      <p className="mt-2 text-sm text-gray-700 font-medium">
-                        {assignment.instructions}
-                      </p>
-                    )}
+                        <div className="flex items-center gap-2 text-sm font-semibold text-brand-primary shrink-0">
+                          <span className="group-open:hidden">Expand</span>
+                          <span className="hidden group-open:inline">Minimize</span>
+                          <ChevronDown
+                            size={18}
+                            className="transition-transform duration-200 group-open:rotate-180"
+                          />
+                        </div>
+                      </div>
+                    </summary>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <InfoPill
-                        icon={<Clock3 size={14} />}
-                        text={`${assignment.max_minutes ?? 5} min max`}
-                      />
-                      <InfoPill
-                        icon={<CalendarDays size={14} />}
-                        text={
-                          assignment.due_at
-                            ? `Due ${formatDate(assignment.due_at)}`
-                            : "No due date"
-                        }
-                      />
-                      <StatusPill status={assignment.status} />
+                    <div className="mt-4 border-t border-brand-muted pt-4">
+                      {assignment.goal && (
+                        <p className="mt-1 text-sm text-gray-700">
+                          <span className="font-semibold">Goal:</span>{" "}
+                          {assignment.goal}
+                        </p>
+                      )}
+
+                      {assignment.instructions && (
+                        <p className="mt-2 text-sm text-gray-700 font-medium whitespace-pre-line">
+                          {assignment.instructions}
+                        </p>
+                      )}
+
+                      <div className="mt-5">
+                        <Link
+                          href={`/participant/sessions/new?participantId=${userId}&assignmentId=${assignment.id}`}
+                          className="inline-flex items-center gap-2 bg-brand-secondary hover:bg-brand-primary text-white font-semibold px-5 py-3 rounded-xl transition-colors shadow-md"
+                        >
+                          <Play size={16} />
+                          Start Session
+                        </Link>
+                      </div>
                     </div>
-
-                    <div className="mt-5">
-                      <Link
-                        href={`/participant/sessions/new?participantId=${userId}&assignmentId=${assignment.id}`}
-                        className="inline-flex items-center gap-2 bg-brand-secondary hover:bg-brand-primary text-white font-semibold px-5 py-3 rounded-xl transition-colors shadow-md"
-                      >
-                        <Play size={16} />
-                        Start Session
-                      </Link>
-                    </div>
-                  </div>
+                  </details>
                 ))}
               </div>
             )}
@@ -202,49 +220,66 @@ export default async function ParticipantSessionsPage() {
             ) : (
               <div className="space-y-4">
                 {completedSessions.map((session) => (
-                  <div
+                  <details
                     key={session.id}
-                    className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5"
+                    className="group rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5"
                   >
-                    <h3 className="text-lg font-bold text-gray-900">
-                      {session.title || "Practice Session"}
-                    </h3>
+                    <summary className="list-none cursor-pointer">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-lg font-bold text-gray-900">
+                            {session.title || "Practice Session"}
+                          </h3>
 
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <InfoPill
-                        icon={<CalendarDays size={14} />}
-                        text={`Completed ${formatDate(
-                          session.ended_at || session.created_at
-                        )}`}
-                      />
-                      <InfoPill
-                        icon={<Clock3 size={14} />}
-                        text={formatDuration(session.duration_seconds)}
-                      />
-                      <StatusPill status={session.status} />
-                    </div>
-
-                    {session.compact_transcript && (
-                      <div className="mt-4 rounded-xl bg-white border border-brand-muted p-3">
-                        <div className="text-xs font-semibold text-gray-500 mb-1">
-                          Saved Summary
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <InfoPill
+                              icon={<CalendarDays size={14} />}
+                              text={`Completed ${formatDate(
+                                session.ended_at || session.created_at
+                              )}`}
+                            />
+                            <InfoPill
+                              icon={<Clock3 size={14} />}
+                              text={formatDuration(session.duration_seconds)}
+                            />
+                            <StatusPill status={session.status} />
+                          </div>
                         </div>
-                        <p className="text-sm text-gray-700 font-medium line-clamp-4 whitespace-pre-line">
-                          {session.compact_transcript}
-                        </p>
-                      </div>
-                    )}
 
-                    <div className="mt-5">
-                      <Link
-                        href={`/participant/sessions/${session.id}`}
-                        className="inline-flex items-center gap-2 bg-white border-2 border-brand-muted hover:border-brand-primary text-gray-900 font-semibold px-5 py-3 rounded-xl transition-colors"
-                      >
-                        <FileText size={16} />
-                        View Details
-                      </Link>
+                        <div className="flex items-center gap-2 text-sm font-semibold text-brand-primary shrink-0">
+                          <span className="group-open:hidden">Expand</span>
+                          <span className="hidden group-open:inline">Minimize</span>
+                          <ChevronDown
+                            size={18}
+                            className="transition-transform duration-200 group-open:rotate-180"
+                          />
+                        </div>
+                      </div>
+                    </summary>
+
+                    <div className="mt-4 border-t border-brand-muted pt-4">
+                      {session.compact_transcript && (
+                        <div className="rounded-xl bg-white border border-brand-muted p-3">
+                          <div className="text-xs font-semibold text-gray-500 mb-1">
+                            Saved Summary
+                          </div>
+                          <p className="text-sm text-gray-700 font-medium whitespace-pre-line">
+                            {session.compact_transcript}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="mt-5">
+                        <Link
+                          href={`/participant/sessions/${session.id}`}
+                          className="inline-flex items-center gap-2 bg-white border-2 border-brand-muted hover:border-brand-primary text-gray-900 font-semibold px-5 py-3 rounded-xl transition-colors"
+                        >
+                          <FileText size={16} />
+                          View Details
+                        </Link>
+                      </div>
                     </div>
-                  </div>
+                  </details>
                 ))}
               </div>
             )}

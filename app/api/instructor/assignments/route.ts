@@ -21,9 +21,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const max_minutes = max_minutes_raw ? Number(max_minutes_raw) : null;
+    const max_minutes = max_minutes_raw ? Number(max_minutes_raw) : 5;
 
-    if (max_minutes !== null && (!Number.isFinite(max_minutes) || max_minutes <= 0)) {
+    if (!Number.isFinite(max_minutes) || max_minutes <= 0) {
       return NextResponse.json(
         { error: "Max minutes must be a valid positive number." },
         { status: 400 }

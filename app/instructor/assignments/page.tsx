@@ -15,7 +15,6 @@ import { requireInstructor } from "@/lib/server/auth/requireInstructor";
 import {
   getInstructorAssignments,
   type AssignmentStatusFilter,
-  type AssignmentHistoryRow,
 } from "@/lib/server/instructor/getInstructorAssignments";
 import { formatShortDate } from "@/lib/utils/studentHelpers";
 
@@ -52,22 +51,25 @@ export default async function InstructorAssignmentsPage({
       : "all";
 
   const { supabase, instructorId, instructorName } = await requireInstructor();
-  const { recentAssigned, recentCompleted, historyRows, stats } =
-    await getInstructorAssignments(supabase, instructorId, selectedFilter);
+  const { historyRows, stats } = await getInstructorAssignments(
+    supabase,
+    instructorId,
+    selectedFilter
+  );
 
   return (
     <div className="min-h-screen bg-brand-light font-sans flex">
       <InstructorSidebar name={instructorName} />
 
       <main className="flex-1 min-w-0 p-6 md:p-8">
-        <div className="max-w-[1400px] mx-auto">
-          <section className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-8">
+        <div className="max-w-[1100px] mx-auto">
+          <section className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 mb-8">
             <div>
               <h1 className="text-3xl font-extrabold text-gray-900">
                 Session Assignments
               </h1>
               <p className="mt-2 text-gray-600 font-medium">
-                Manage assigned sessions, recent activity, and history.
+                Create, track, and manage session assignments.
               </p>
             </div>
 
@@ -76,18 +78,13 @@ export default async function InstructorAssignmentsPage({
               className="inline-flex items-center gap-2 rounded-2xl bg-brand-secondary hover:bg-brand-primary text-white font-semibold px-5 py-3 shadow-md transition-colors"
             >
               <Plus size={18} />
-              Assign New Session
+              Assign Session
             </Link>
           </section>
 
-          <section className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
+          <section className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <StatCard
               icon={<ClipboardList size={18} />}
-              label="Total"
-              value={String(stats.total)}
-            />
-            <StatCard
-              icon={<Clock3 size={18} />}
               label="Assigned"
               value={String(stats.assigned)}
             />
@@ -108,46 +105,14 @@ export default async function InstructorAssignmentsPage({
             />
           </section>
 
-          <section className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
-            <Panel
-              title="Recently Assigned"
-              subtitle="Created in the last 4 days"
-            >
-              {recentAssigned.length === 0 ? (
-                <EmptyState text="No recent assigned sessions." />
-              ) : (
-                <div className="space-y-4">
-                  {recentAssigned.map((item) => (
-                    <AssignmentCard key={item.id} item={item} />
-                  ))}
-                </div>
-              )}
-            </Panel>
-
-            <Panel
-              title="Recently Completed"
-              subtitle="Completed in the last 4 days"
-            >
-              {recentCompleted.length === 0 ? (
-                <EmptyState text="No recent completed sessions." />
-              ) : (
-                <div className="space-y-4">
-                  {recentCompleted.map((item) => (
-                    <AssignmentCard key={item.id} item={item} />
-                  ))}
-                </div>
-              )}
-            </Panel>
-          </section>
-
           <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm overflow-hidden">
-            <div className="p-5 md:p-6 border-b-2 border-brand-muted bg-brand-light/30 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="p-5 md:p-6 border-b-2 border-brand-muted bg-brand-light/30 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <h2 className="text-xl font-extrabold text-gray-900">
-                  History
+                  All Assignments
                 </h2>
                 <p className="text-sm text-gray-500 font-medium mt-1">
-                  Filter and manage all assignments.
+                  Filter assignments by status.
                 </p>
               </div>
 
@@ -175,7 +140,7 @@ export default async function InstructorAssignmentsPage({
 
             {historyRows.length === 0 ? (
               <div className="p-8">
-                <EmptyState text="No assignments found for this filter." />
+                <EmptyState text="No assignments found." />
               </div>
             ) : (
               <div className="p-4 md:p-6 space-y-4">
@@ -184,17 +149,20 @@ export default async function InstructorAssignmentsPage({
                     key={item.id}
                     className="rounded-2xl border-2 border-brand-muted bg-brand-light/30 p-5"
                   >
-                    <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
-                      <div className="min-w-0">
-                        <h3 className="text-lg font-bold text-gray-900">
-                          {item.title}
-                        </h3>
-                        <p className="text-sm text-gray-600 font-medium mt-1">
-                          Participant: {item.participant_name}
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <h3 className="text-lg font-bold text-gray-900">
+                            {item.title}
+                          </h3>
+                          <StatusPill status={item.effective_status} />
+                        </div>
+
+                        <p className="text-sm text-gray-600 font-medium">
+                          {item.participant_name}
                         </p>
 
                         <div className="mt-3 flex flex-wrap gap-2">
-                          <StatusPill status={item.effective_status} />
                           <Pill
                             text={`Assigned ${formatShortDate(item.created_at)}`}
                           />
@@ -205,18 +173,17 @@ export default async function InstructorAssignmentsPage({
                                 : "No due date"
                             }`}
                           />
-                          <Pill
-                            text={`Latest activity ${
-                              item.latest_activity_at
-                                ? formatShortDate(item.latest_activity_at)
-                                : "—"
-                            }`}
-                          />
+                          {item.latest_activity_at && (
+                            <Pill
+                              text={`Latest ${formatShortDate(
+                                item.latest_activity_at
+                              )}`}
+                            />
+                          )}
                         </div>
 
                         {item.goal && (
                           <p className="mt-4 text-sm text-gray-700 leading-6">
-                            <span className="font-semibold">Goal:</span>{" "}
                             {item.goal}
                           </p>
                         )}
@@ -257,64 +224,6 @@ export default async function InstructorAssignmentsPage({
   );
 }
 
-function Panel({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
-      <h2 className="text-xl font-extrabold text-gray-900">{title}</h2>
-      <p className="text-sm text-gray-500 font-medium mt-1 mb-6">{subtitle}</p>
-      {children}
-    </section>
-  );
-}
-
-function AssignmentCard({ item }: { item: AssignmentHistoryRow }) {
-  return (
-    <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/30 p-5">
-      <h3 className="text-lg font-bold text-gray-900">{item.title}</h3>
-      <p className="text-sm text-gray-600 font-medium mt-1">
-        Participant: {item.participant_name}
-      </p>
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        <StatusPill status={item.effective_status} />
-        <Pill text={`Assigned ${formatShortDate(item.created_at)}`} />
-        {item.latest_activity_at && (
-          <Pill text={`Latest ${formatShortDate(item.latest_activity_at)}`} />
-        )}
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Link
-          href={`/instructor/assignments/${item.id}/edit`}
-          className="inline-flex items-center gap-2 rounded-xl border-2 border-brand-muted bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:border-brand-primary transition-colors"
-        >
-          <Pencil size={16} />
-          Edit
-        </Link>
-
-        <form action={`/api/instructor/assignments/${item.id}`} method="POST">
-          <input type="hidden" name="_intent" value="delete" />
-          <button
-            type="submit"
-            className="inline-flex items-center gap-2 rounded-xl border-2 border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 transition-colors"
-          >
-            <Trash2 size={16} />
-            Delete
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
 function StatCard({
   icon,
   label,
@@ -325,14 +234,14 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="rounded-[1.75rem] border-2 border-brand-muted bg-white p-5 shadow-sm">
+    <div className="rounded-[1.5rem] border-2 border-brand-muted bg-white p-4 shadow-sm">
       <div className="flex items-center gap-3">
-        <div className="h-11 w-11 rounded-2xl bg-brand-light border-2 border-brand-muted flex items-center justify-center text-brand-primary">
+        <div className="h-10 w-10 rounded-xl bg-brand-light border-2 border-brand-muted flex items-center justify-center text-brand-primary">
           {icon}
         </div>
         <div>
-          <p className="text-sm font-semibold text-gray-500">{label}</p>
-          <p className="text-2xl font-extrabold text-gray-900">{value}</p>
+          <p className="text-xs font-semibold text-gray-500">{label}</p>
+          <p className="text-xl font-extrabold text-gray-900">{value}</p>
         </div>
       </div>
     </div>
