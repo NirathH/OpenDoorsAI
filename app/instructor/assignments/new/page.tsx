@@ -190,7 +190,6 @@ export default async function NewAssignmentPage() {
                   type="submit"
                   className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-secondary hover:bg-brand-primary text-white font-semibold px-6 py-3.5 shadow-sm transition-colors"
                 >
-                  <Plus size={18} />
                   Create Assignment
                 </button>
 
