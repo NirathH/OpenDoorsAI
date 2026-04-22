@@ -37,7 +37,7 @@ export default async function EditAssignmentPage({ params }: PageProps) {
       <InstructorSidebar name={instructorName} />
 
       <main className="flex-1 min-w-0 p-6 md:p-8">
-        <div className="max-w-[900px] mx-auto">
+        <div className="max-w-225 mx-auto">
           <div className="mb-6">
             <Link
               href="/instructor/assignments"
@@ -48,7 +48,7 @@ export default async function EditAssignmentPage({ params }: PageProps) {
             </Link>
           </div>
 
-          <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
+          <section className="bg-white rounded-4xl border-2 border-brand-muted shadow-sm p-6 md:p-8">
             <div className="flex items-center gap-3 mb-6">
               <div className="h-12 w-12 rounded-2xl bg-brand-light border-2 border-brand-muted flex items-center justify-center text-brand-primary">
                 <Pencil size={22} />

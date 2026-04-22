@@ -62,7 +62,7 @@ export default async function InstructorAssignmentsPage({
       <InstructorSidebar name={instructorName} />
 
       <main className="flex-1 min-w-0 p-6 md:p-8">
-        <div className="max-w-[1100px] mx-auto">
+        <div className="max-w-275 mx-auto">
           <section className="flex flex-col md:flex-row md:items-center md:justify-between gap-5 mb-8">
             <div>
               <h1 className="text-3xl font-extrabold text-gray-900">
@@ -105,7 +105,7 @@ export default async function InstructorAssignmentsPage({
             />
           </section>
 
-          <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm overflow-hidden">
+          <section className="bg-white rounded-4xl border-2 border-brand-muted shadow-sm overflow-hidden">
             <div className="p-5 md:p-6 border-b-2 border-brand-muted bg-brand-light/30 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
                 <h2 className="text-xl font-extrabold text-gray-900">
@@ -234,7 +234,7 @@ function StatCard({
   value: string;
 }) {
   return (
-    <div className="rounded-[1.5rem] border-2 border-brand-muted bg-white p-4 shadow-sm">
+    <div className="rounded-3xl border-2 border-brand-muted bg-white p-4 shadow-sm">
       <div className="flex items-center gap-3">
         <div className="h-10 w-10 rounded-xl bg-brand-light border-2 border-brand-muted flex items-center justify-center text-brand-primary">
           {icon}
