@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { HumeClient } from "hume";
 import { analyzeSession } from "@/lib/server/sessions/analyzeSession";
+import { createSupabaseServer } from "@/lib/supabaseServer";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 /**
  * Ensures this runs in Node (required for Hume + server libs)
@@ -26,6 +28,40 @@ export async function POST(req: Request) {
         { error: "jobId and sessionId required" },
         { status: 400 }
       );
+    }
+
+    // Authenticate user
+    const supabaseServer = await createSupabaseServer();
+    const { data: authData, error: authError } = await supabaseServer.auth.getUser();
+
+    if (authError || !authData?.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const authUserId = authData.user.id;
+
+    // Verify session ownership
+    const { data: sessionData, error: sessionError } = await supabaseAdmin
+      .from("sessions")
+      .select("participant_id")
+      .eq("id", sessionId)
+      .single();
+
+    if (sessionError || !sessionData) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+
+    if (sessionData.participant_id !== authUserId) {
+      // Check if user is an instructor of this participant
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("instructor_id")
+        .eq("user_id", sessionData.participant_id)
+        .single();
+
+      if (!profile || profile.instructor_id !== authUserId) {
+        return NextResponse.json({ error: "Unauthorized access to session" }, { status: 403 });
+      }
     }
 
     // Initialize Hume client

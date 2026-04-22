@@ -170,7 +170,7 @@ export default async function StudentDetailsPage({ params }: PageProps) {
                       </div>
 
                       <Link
-                        href={`/participant/sessions/${session.id}`}
+                        href={`/instructor/students/${studentId}/sessions/${session.id}`}
                         className="inline-flex items-center gap-2 rounded-xl border-2 border-brand-muted bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:border-brand-primary transition-colors"
                       >
                         View Session

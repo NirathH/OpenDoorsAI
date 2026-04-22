@@ -135,7 +135,7 @@ export default async function InstructorDashboardPage() {
                           meta={`Completed ${formatShortDate(
                             item.latest_activity_at || item.created_at
                           )}`}
-                          href={item.latest_session_id ? `/participant/sessions/${item.latest_session_id}` : `/instructor/assignments/${item.id}/edit`}
+                          href={item.latest_session_id ? `/instructor/students/${item.participant_id}/sessions/${item.latest_session_id}` : `/instructor/assignments/${item.id}/edit`}
                           status={item.effective_status}
                         />
                       ))}
