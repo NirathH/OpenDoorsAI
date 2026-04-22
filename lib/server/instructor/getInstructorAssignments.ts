@@ -25,6 +25,7 @@ export type AssignmentHistoryRow = AssignmentRow & {
   participant_name: string;
   effective_status: AssignmentStatusFilter | "assigned" | "in_progress" | "completed";
   latest_activity_at: string | null;
+  latest_session_id: string | null;
   recent_completed: boolean;
 };
 
@@ -142,6 +143,7 @@ export async function getInstructorAssignments(
       participant_name: participantMap.get(assignment.participant_id) || "Unnamed Participant",
       effective_status: effectiveStatus,
       latest_activity_at: latestActivityAt,
+      latest_session_id: relatedSessions[0]?.id || null,
       recent_completed: recentCompleted,
     };
   });

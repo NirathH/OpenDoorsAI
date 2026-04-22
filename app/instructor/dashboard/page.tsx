@@ -29,7 +29,7 @@ type StudentTableRow = {
 export default async function InstructorDashboardPage() {
   const { supabase, instructorId, instructorName } = await requireInstructor();
 
-  const { rows: studentRows } = await getInstructorStudents(
+  const { rows: studentRows, stats: studentStats } = await getInstructorStudents(
     supabase,
     instructorId
   );
@@ -39,6 +39,8 @@ export default async function InstructorDashboardPage() {
     recentAssigned,
     recentCompleted,
   } = await getInstructorAssignments(supabase, instructorId, "all");
+
+  const urgentCount = studentStats.needsAttention + studentStats.inactiveStudents + assignmentStats.overdue;
 
   const students: StudentTableRow[] = studentRows.map((student) => ({
     id: student.user_id,
@@ -70,35 +72,25 @@ export default async function InstructorDashboardPage() {
             </p>
           </section>
 
-          <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
+          <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             <SummaryCard
-              icon={<Users size={18} />}
-              label="Students"
-              value={String(students.length)}
-            />
-            <SummaryCard
-              icon={<ClipboardList size={18} />}
-              label="Assigned"
-              value={String(assignmentStats.assigned)}
-            />
-            <SummaryCard
-              icon={<Clock3 size={18} />}
-              label="In Progress"
-              value={String(assignmentStats.inProgress)}
+              icon={<AlertTriangle size={18} />}
+              label="Needs Attention"
+              value={String(urgentCount)}
             />
             <SummaryCard
               icon={<CheckCircle2 size={18} />}
-              label="Completed Recently"
+              label="Ready for Review"
               value={String(recentCompleted.length)}
             />
             <SummaryCard
-              icon={<AlertTriangle size={18} />}
-              label="Overdue"
-              value={String(assignmentStats.overdue)}
+              icon={<Users size={18} />}
+              label="Active Students"
+              value={String(studentStats.activeStudents)}
             />
           </section>
 
-          <section className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
+          <section className="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6 mb-8">
             <div className="min-w-0">
               <DashboardClient initialStudents={students} />
             </div>
@@ -128,6 +120,31 @@ export default async function InstructorDashboardPage() {
               <div className="p-5 space-y-6">
                 <div>
                   <div className="text-sm font-bold text-gray-900 mb-3">
+                    Recently Completed
+                  </div>
+
+                  {recentCompleted.length === 0 ? (
+                    <EmptyCard text="No recent completed assignments." />
+                  ) : (
+                    <div className="space-y-3">
+                      {recentCompleted.slice(0, 4).map((item) => (
+                        <MiniAssignmentCard
+                          key={item.id}
+                          title={item.title}
+                          subtitle={item.participant_name}
+                          meta={`Completed ${formatShortDate(
+                            item.latest_activity_at || item.created_at
+                          )}`}
+                          href={item.latest_session_id ? `/participant/sessions/${item.latest_session_id}` : `/instructor/assignments/${item.id}/edit`}
+                          status={item.effective_status}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <div className="text-sm font-bold text-gray-900 mb-3">
                     Recently Assigned
                   </div>
 
@@ -148,33 +165,39 @@ export default async function InstructorDashboardPage() {
                     </div>
                   )}
                 </div>
-
-                <div>
-                  <div className="text-sm font-bold text-gray-900 mb-3">
-                    Recently Completed
-                  </div>
-
-                  {recentCompleted.length === 0 ? (
-                    <EmptyCard text="No recent completed assignments." />
-                  ) : (
-                    <div className="space-y-3">
-                      {recentCompleted.slice(0, 4).map((item) => (
-                        <MiniAssignmentCard
-                          key={item.id}
-                          title={item.title}
-                          subtitle={item.participant_name}
-                          meta={`Completed ${formatShortDate(
-                            item.latest_activity_at || item.created_at
-                          )}`}
-                          href={`/instructor/assignments/${item.id}/edit`}
-                          status={item.effective_status}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
             </aside>
+          </section>
+
+          <section>
+            <h2 className="text-lg font-extrabold text-gray-900 mb-4 px-1">Detailed Metrics</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4">
+              <SummaryCard
+                icon={<Users size={18} />}
+                label="Total Students"
+                value={String(students.length)}
+              />
+              <SummaryCard
+                icon={<ClipboardList size={18} />}
+                label="Assigned"
+                value={String(assignmentStats.assigned)}
+              />
+              <SummaryCard
+                icon={<Clock3 size={18} />}
+                label="In Progress"
+                value={String(assignmentStats.inProgress)}
+              />
+              <SummaryCard
+                icon={<CheckCircle2 size={18} />}
+                label="Completed"
+                value={String(assignmentStats.completed)}
+              />
+              <SummaryCard
+                icon={<AlertTriangle size={18} />}
+                label="Overdue"
+                value={String(assignmentStats.overdue)}
+              />
+            </div>
           </section>
         </div>
       </main>
