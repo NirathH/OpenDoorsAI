@@ -8,6 +8,7 @@ import {
   UserCircle2,
   Briefcase,
   StickyNote,
+  ChevronDown,
 } from "lucide-react";
 import InstructorSidebar from "@/components/InstructorSidebar";
 import { requireInstructor } from "@/lib/server/auth/requireInstructor";
@@ -26,21 +27,30 @@ type PageProps = {
   params: Promise<{
     studentId: string;
   }>;
+  searchParams?: Promise<{
+    showAll?: string;
+  }>;
 };
 
-
-export default async function StudentDetailsPage({ params }: PageProps) {
+export default async function StudentDetailsPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { studentId } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const showAll = resolvedSearchParams?.showAll === "true";
 
   const { supabase, instructorId, instructorName } = await requireInstructor();
   const { studentProfile, safeName, sessions, stats } =
     await getInstructorStudentDetails(supabase, instructorId, studentId);
 
+  const visibleSessions = showAll ? sessions : sessions.slice(0, 5);
+
   return (
     <div className="min-h-screen bg-brand-light font-sans flex">
       <InstructorSidebar name={instructorName} />
 
-      <main className="flex-1 min-w-0 p-6 md:p-8">
+      <main className="flex-1 min-w-0 p-4 md:p-8">
         <div className="max-w-[1400px] mx-auto">
           <div className="mb-6">
             <Link
@@ -54,13 +64,13 @@ export default async function StudentDetailsPage({ params }: PageProps) {
 
           <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8 mb-8">
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-full bg-brand-light border-2 border-brand-muted flex items-center justify-center text-brand-primary font-bold text-xl">
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="h-16 w-16 shrink-0 rounded-full bg-brand-light border-2 border-brand-muted flex items-center justify-center text-brand-primary font-bold text-xl">
                   {getInitials(safeName)}
                 </div>
 
-                <div>
-                  <h1 className="text-3xl font-extrabold text-gray-900">
+                <div className="min-w-0">
+                  <h1 className="text-3xl font-extrabold text-gray-900 truncate">
                     {safeName}
                   </h1>
                   <p className="mt-1 text-gray-600 font-medium">
@@ -85,7 +95,7 @@ export default async function StudentDetailsPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               <DetailCard
                 icon={<Briefcase size={18} />}
                 label="Job Goal"
@@ -120,12 +130,34 @@ export default async function StudentDetailsPage({ params }: PageProps) {
 
           <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm overflow-hidden">
             <div className="p-5 md:p-6 border-b-2 border-brand-muted bg-brand-light/30">
-              <h2 className="text-xl font-extrabold text-gray-900">
-                Session History
-              </h2>
-              <p className="text-sm text-gray-500 font-medium mt-1">
-                Review this student’s sessions, timing, and saved summaries.
-              </p>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-extrabold text-gray-900">
+                    Session History
+                  </h2>
+                  <p className="text-sm text-gray-500 font-medium mt-1">
+                    Showing {visibleSessions.length} of {sessions.length} session
+                    {sessions.length === 1 ? "" : "s"}.
+                  </p>
+                </div>
+
+                {sessions.length > 5 && (
+                  <Link
+                    href={
+                      showAll
+                        ? `/instructor/students/${studentId}`
+                        : `/instructor/students/${studentId}?showAll=true`
+                    }
+                    className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-colors ${
+                      showAll
+                        ? "border-2 border-brand-muted bg-white text-gray-700 hover:border-brand-primary hover:text-brand-primary"
+                        : "bg-brand-primary text-white hover:opacity-90"
+                    }`}
+                  >
+                    {showAll ? "Show Less" : "View All Sessions"}
+                  </Link>
+                )}
+              </div>
             </div>
 
             {sessions.length === 0 ? (
@@ -143,51 +175,97 @@ export default async function StudentDetailsPage({ params }: PageProps) {
               </div>
             ) : (
               <div className="p-4 md:p-6 space-y-4">
-                {sessions.map((session: SessionRow) => (
-                  <div
+                {visibleSessions.map((session: SessionRow) => (
+                  <details
                     key={session.id}
-                    className="rounded-2xl border-2 border-brand-muted bg-brand-light/30 p-5"
+                    className="group rounded-2xl border-2 border-brand-muted bg-brand-light/20 overflow-hidden"
                   >
-                    <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
-                      <div>
-                        <h3 className="text-lg font-bold text-gray-900">
-                          {session.title || "Practice Session"}
-                        </h3>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          <Pill text={`Status: ${session.status}`} />
-                          <Pill
-                            text={`Started: ${formatDate(
-                              session.started_at || session.created_at
-                            )}`}
-                          />
-                          <Pill text={`Ended: ${formatDate(session.ended_at)}`} />
-                          <Pill
-                            text={`Duration: ${formatDuration(
-                              session.duration_seconds
-                            )}`}
-                          />
+                    <summary className="list-none cursor-pointer p-5">
+                      <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-start gap-3">
+                            <div className="mt-1 text-gray-500 transition-transform group-open:rotate-180">
+                              <ChevronDown size={18} />
+                            </div>
+
+                            <div className="min-w-0">
+                              <h3 className="text-lg font-bold text-gray-900 truncate">
+                                {session.title || "Practice Session"}
+                              </h3>
+
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                <Pill text={`Status: ${session.status}`} />
+                                <Pill
+                                  text={`Started: ${formatShortDate(
+                                    session.started_at || session.created_at
+                                  )}`}
+                                />
+                                <Pill
+                                  text={`Duration: ${formatDuration(
+                                    session.duration_seconds
+                                  )}`}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 pl-8 xl:pl-0">
+                          <span className="text-sm font-semibold text-gray-500">
+                            {session.ended_at
+                              ? `Ended ${formatShortDate(session.ended_at)}`
+                              : "Not finished"}
+                          </span>
+                          <span className="inline-flex items-center rounded-xl border-2 border-brand-muted bg-white px-3 py-2 text-sm font-semibold text-gray-700">
+                            Details
+                          </span>
                         </div>
                       </div>
+                    </summary>
 
-                      <Link
-                        href={`/instructor/students/${studentId}/sessions/${session.id}`}
-                        className="inline-flex items-center gap-2 rounded-xl border-2 border-brand-muted bg-white px-4 py-2 text-sm font-semibold text-gray-800 hover:border-brand-primary transition-colors"
-                      >
-                        View Session
-                      </Link>
+                    <div className="border-t-2 border-brand-muted bg-white p-5">
+                      <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
+                        <div>
+                          <div className="flex flex-wrap gap-2">
+                            <Pill text={`Status: ${session.status}`} />
+                            <Pill
+                              text={`Started: ${formatDate(
+                                session.started_at || session.created_at
+                              )}`}
+                            />
+                            <Pill text={`Ended: ${formatDate(session.ended_at)}`} />
+                            <Pill
+                              text={`Duration: ${formatDuration(
+                                session.duration_seconds
+                              )}`}
+                            />
+                          </div>
+                        </div>
+
+                        <Link
+                          href={`/instructor/sessions/${session.id}?studentId=${studentId}`}
+                          className="inline-flex items-center gap-2 rounded-xl border-2 border-brand-muted bg-brand-light px-4 py-2 text-sm font-semibold text-gray-800 hover:border-brand-primary hover:bg-white transition-colors"
+                        >
+                          View Session
+                        </Link>
+                      </div>
+
+                      {session.compact_transcript ? (
+                        <div className="mt-4 rounded-xl bg-brand-light/20 border border-brand-muted p-4">
+                          <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
+                            Saved Summary
+                          </div>
+                          <p className="text-sm text-gray-700 whitespace-pre-line leading-6">
+                            {session.compact_transcript}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="mt-4 rounded-xl border border-dashed border-brand-muted p-4 text-sm text-gray-500">
+                          No saved summary for this session yet.
+                        </div>
+                      )}
                     </div>
-
-                    {session.compact_transcript && (
-                      <div className="mt-4 rounded-xl bg-white border border-brand-muted p-4">
-                        <div className="text-xs font-semibold text-gray-500 mb-2">
-                          Saved Summary
-                        </div>
-                        <p className="text-sm text-gray-700 whitespace-pre-line leading-6">
-                          {session.compact_transcript}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  </details>
                 ))}
               </div>
             )}
