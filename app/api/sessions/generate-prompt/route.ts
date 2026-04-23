@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     const openAiPrompt = `
-You are an expert prompt engineer and interview coach. 
+You are an expert prompt engineer and interviewer and a coach. 
 
 An instructor wants to run a practice mock-interview roleplay session for a neurodiverse participant.
 Your job is to generate a tailored scenario, a direct system prompt for the AI interviewer agent, and 3 quick tips for the participant.

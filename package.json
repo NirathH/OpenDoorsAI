@@ -13,12 +13,14 @@
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.98.0",
     "dotenv": "^17.4.2",
+    "html-to-image": "^1.11.13",
     "hume": "^0.15.15",
     "lucide-react": "^0.475.0",
     "next": "16.1.6",
     "openai": "^6.33.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "recharts": "^3.8.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

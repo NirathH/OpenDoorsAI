@@ -9,6 +9,12 @@ import {
   Briefcase,
   StickyNote,
   ChevronDown,
+  CheckCircle2,
+  Clock3,
+  TrendingUp,
+  TimerReset,
+  Activity,
+  Target,
 } from "lucide-react";
 import InstructorSidebar from "@/components/InstructorSidebar";
 import { requireInstructor } from "@/lib/server/auth/requireInstructor";
@@ -46,12 +52,41 @@ export default async function StudentDetailsPage({
 
   const visibleSessions = showAll ? sessions : sessions.slice(0, 5);
 
+  const completedSessions = stats.completedSessions ?? 0;
+  const totalSessions = stats.totalSessions ?? 0;
+  const pendingSessions = Math.max(totalSessions - completedSessions, 0);
+
+  const completionRate =
+    totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0;
+
+  const durationValues = sessions
+    .map((session) => session.duration_seconds ?? 0)
+    .filter((value) => value > 0);
+
+  const averageDurationSeconds =
+    durationValues.length > 0
+      ? Math.round(
+          durationValues.reduce((sum, value) => sum + value, 0) /
+            durationValues.length
+        )
+      : 0;
+
+  const latestActivity = stats.latestSession
+    ? formatShortDate(
+        stats.latestSession.ended_at || stats.latestSession.created_at
+      )
+    : "—";
+
+  const recentCompletedCount = sessions.filter(
+    (session) => session.status === "completed" || session.ended_at
+  ).length;
+
   return (
     <div className="min-h-screen bg-brand-light font-sans flex">
       <InstructorSidebar name={instructorName} />
 
       <main className="flex-1 min-w-0 p-4 md:p-8">
-        <div className="max-w-[1400px] mx-auto">
+        <div className="max-w-350 mx-auto">
           <div className="mb-6">
             <Link
               href="/instructor/students"
@@ -62,7 +97,7 @@ export default async function StudentDetailsPage({
             </Link>
           </div>
 
-          <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8 mb-8">
+          <section className="bg-white rounded-4xl border-2 border-brand-muted shadow-sm p-6 md:p-8 mb-8">
             <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
               <div className="flex items-center gap-4 min-w-0">
                 <div className="h-16 w-16 shrink-0 rounded-full bg-brand-light border-2 border-brand-muted flex items-center justify-center text-brand-primary font-bold text-xl">
@@ -86,11 +121,11 @@ export default async function StudentDetailsPage({
                 />
                 <InfoBadge
                   icon={<FileText size={15} />}
-                  text={`${stats.totalSessions} total sessions`}
+                  text={`${totalSessions} total sessions`}
                 />
                 <InfoBadge
                   icon={<CalendarDays size={15} />}
-                  text={`${stats.completedSessions} completed`}
+                  text={`${completedSessions} completed`}
                 />
               </div>
             </div>
@@ -109,26 +144,128 @@ export default async function StudentDetailsPage({
             </div>
           </section>
 
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <StatCard label="Total Sessions" value={String(stats.totalSessions)} />
-            <StatCard
-              label="Completed Sessions"
-              value={String(stats.completedSessions)}
-            />
-            <StatCard
-              label="Latest Activity"
-              value={
-                stats.latestSession
-                  ? formatShortDate(
-                      stats.latestSession.ended_at ||
-                        stats.latestSession.created_at
-                    )
-                  : "—"
-              }
-            />
+          <section className="bg-white rounded-4xl border-2 border-brand-muted shadow-sm p-6 md:p-8 mb-8">
+            <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-5 mb-6">
+              <div>
+                <h2 className="text-2xl font-extrabold text-gray-900">
+                  Participant Dashboard
+                </h2>
+                <p className="mt-1 text-gray-600 font-medium">
+                  A quick performance overview for this participant.
+                </p>
+              </div>
+
+              <div className="inline-flex items-center gap-2 rounded-full border-2 border-brand-muted bg-brand-light/30 px-4 py-2 text-sm font-semibold text-gray-700 w-fit">
+                <Activity size={15} />
+                Latest activity: {latestActivity}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+              <DashboardCard
+                icon={<CheckCircle2 size={20} />}
+                label="Completed Sessions"
+                value={String(completedSessions)}
+                subtext="Finished by participant"
+              />
+              <DashboardCard
+                icon={<Clock3 size={20} />}
+                label="Pending Sessions"
+                value={String(pendingSessions)}
+                subtext="Not finished yet"
+              />
+              <DashboardCard
+                icon={<TrendingUp size={20} />}
+                label="Completion Rate"
+                value={`${completionRate}%`}
+                subtext="Based on session history"
+              />
+              <DashboardCard
+                icon={<TimerReset size={20} />}
+                label="Avg Session Time"
+                value={formatDuration(averageDurationSeconds)}
+                subtext="Average session duration"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+              <div className="xl:col-span-2 rounded-3xl border-2 border-brand-muted bg-brand-light/20 p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <Target size={18} className="text-brand-primary" />
+                  <h3 className="text-lg font-bold text-gray-900">
+                    Progress Snapshot
+                  </h3>
+                </div>
+
+                <p className="text-sm text-gray-600 font-medium leading-6">
+                  <span className="font-bold text-gray-900">{safeName}</span> has
+                  completed{" "}
+                  <span className="font-bold text-gray-900">
+                    {completedSessions}
+                  </span>{" "}
+                  out of{" "}
+                  <span className="font-bold text-gray-900">{totalSessions}</span>{" "}
+                  session{totalSessions === 1 ? "" : "s"}, with an overall
+                  completion rate of{" "}
+                  <span className="font-bold text-gray-900">
+                    {completionRate}%
+                  </span>
+                  . Their latest activity was on{" "}
+                  <span className="font-bold text-gray-900">{latestActivity}</span>.
+                </p>
+
+                <div className="mt-4">
+                  <div className="flex items-center justify-between text-sm font-semibold text-gray-600 mb-2">
+                    <span>Progress</span>
+                    <span>{completionRate}%</span>
+                  </div>
+
+                  <div className="h-3 w-full rounded-full bg-white border border-brand-muted overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-brand-primary transition-all"
+                      style={{ width: `${completionRate}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-3xl border-2 border-brand-muted bg-white p-5">
+                <h3 className="text-lg font-bold text-gray-900 mb-4">
+                  Quick Insight
+                </h3>
+
+                <div className="space-y-3">
+                  <InsightRow
+                    label="Student Name"
+                    value={safeName}
+                  />
+                  <InsightRow
+                    label="Completed Recently"
+                    value={`${recentCompletedCount}`}
+                  />
+                  <InsightRow
+                    label="Latest Activity"
+                    value={latestActivity}
+                  />
+                  <InsightRow
+                    label="Average Duration"
+                    value={formatDuration(averageDurationSeconds)}
+                  />
+                </div>
+              </div>
+            </div>
           </section>
 
-          <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm overflow-hidden">
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <StatCard label="Total Sessions" value={String(totalSessions)} />
+            <StatCard
+              label="Completed Sessions"
+              value={String(completedSessions)}
+            />
+            <StatCard label="Latest Activity" value={latestActivity} />
+          </section>
+
+          <section className="bg-white rounded-4xl border-2 border-brand-muted shadow-sm overflow-hidden">
             <div className="p-5 md:p-6 border-b-2 border-brand-muted bg-brand-light/30">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div>
@@ -291,6 +428,44 @@ function StatCard({
   );
 }
 
+function DashboardCard({
+  icon,
+  label,
+  value,
+  subtext,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  subtext: string;
+}) {
+  return (
+    <div className="rounded-3xl border-2 border-brand-muted bg-brand-light/20 p-5">
+      <div className="flex items-center gap-2 text-brand-primary mb-3">
+        {icon}
+      </div>
+      <p className="text-sm font-semibold text-gray-500">{label}</p>
+      <p className="text-2xl font-extrabold text-gray-900 mt-1">{value}</p>
+      <p className="text-xs text-gray-500 font-medium mt-1">{subtext}</p>
+    </div>
+  );
+}
+
+function InsightRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl border border-brand-muted bg-brand-light/20 px-3 py-2">
+      <div className="text-xs font-semibold text-gray-500">{label}</div>
+      <div className="text-sm font-bold text-gray-900 mt-1">{value}</div>
+    </div>
+  );
+}
+
 function Pill({ text }: { text: string }) {
   return (
     <span className="inline-flex items-center rounded-full px-3 py-1.5 text-xs font-semibold border-2 border-brand-muted bg-white text-gray-700">
@@ -324,7 +499,7 @@ function DetailCard({
   value: string;
 }) {
   return (
-    <div className="rounded-[1.5rem] border-2 border-brand-muted bg-brand-light/30 p-4">
+    <div className="rounded-3xl border-2 border-brand-muted bg-brand-light/30 p-4">
       <div className="flex items-center gap-2 text-gray-700 font-semibold text-sm mb-2">
         {icon}
         {label}

@@ -37,6 +37,13 @@ type Session = {
   created_at: string;
 };
 
+type PageProps = {
+  searchParams?: Promise<{
+    showAllAssigned?: string;
+    showAllCompleted?: string;
+  }>;
+};
+
 function formatDate(dateString: string | null) {
   if (!dateString) return "—";
   return new Date(dateString).toLocaleDateString();
@@ -49,7 +56,13 @@ function formatDuration(seconds: number | null) {
   return `${mins}m ${secs}s`;
 }
 
-export default async function ParticipantSessionsPage() {
+export default async function ParticipantSessionsPage({
+  searchParams,
+}: PageProps) {
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const showAllAssigned = resolvedSearchParams?.showAllAssigned === "true";
+  const showAllCompleted = resolvedSearchParams?.showAllCompleted === "true";
+
   const supabase = await createSupabaseServer();
   const { data: authData } = await supabase.auth.getUser();
 
@@ -98,11 +111,19 @@ export default async function ParticipantSessionsPage() {
   const assignedSessions = (assignedData ?? []) as Assignment[];
   const completedSessions = (completedData ?? []) as Session[];
 
+  const visibleAssignedSessions = showAllAssigned
+    ? assignedSessions
+    : assignedSessions.slice(0, 4);
+
+  const visibleCompletedSessions = showAllCompleted
+    ? completedSessions
+    : completedSessions.slice(0, 4);
+
   return (
     <div className="min-h-screen bg-brand-light font-sans">
       <Navbar userName={fullName} userRole="Participant" />
 
-      <main className="max-w-[1400px] mx-auto p-6 md:p-8">
+      <main className="max-w-350 mx-auto p-6 md:p-8">
         <div className="mb-8">
           <h1 className="text-3xl font-extrabold text-gray-900">My Sessions</h1>
           <p className="mt-2 text-gray-600 font-medium">
@@ -111,26 +132,45 @@ export default async function ParticipantSessionsPage() {
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
-                <ClipboardList size={22} className="text-brand-primary" />
+          <section className="bg-white rounded-4xl border-2 border-brand-muted shadow-sm p-6 md:p-8">
+            <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
+                  <ClipboardList size={22} className="text-brand-primary" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-extrabold text-gray-900">
+                    Assigned / Not Completed
+                  </h2>
+                  <p className="text-sm text-gray-500 font-medium">
+                    Showing {visibleAssignedSessions.length} of {assignedSessions.length} sessions
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-extrabold text-gray-900">
-                  Assigned / Not Completed
-                </h2>
-                <p className="text-sm text-gray-500 font-medium">
-                  Sessions that still need your attention
-                </p>
-              </div>
+
+              {assignedSessions.length > 4 && (
+                <Link
+                  href={
+                    showAllAssigned
+                      ? "/participant/sessions"
+                      : "/participant/sessions?showAllAssigned=true"
+                  }
+                  className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                    showAllAssigned
+                      ? "border-2 border-brand-muted bg-white text-gray-700 hover:border-brand-primary hover:text-brand-primary"
+                      : "bg-brand-primary text-white hover:opacity-90"
+                  }`}
+                >
+                  {showAllAssigned ? "Show Less" : "Show More"}
+                </Link>
+              )}
             </div>
 
             {assignedSessions.length === 0 ? (
               <EmptyState text="No assigned sessions waiting right now." />
             ) : (
               <div className="space-y-4">
-                {assignedSessions.map((assignment) => (
+                {visibleAssignedSessions.map((assignment) => (
                   <details
                     key={assignment.id}
                     className="group rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5"
@@ -200,26 +240,45 @@ export default async function ParticipantSessionsPage() {
             )}
           </section>
 
-          <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
-                <CheckCircle2 size={22} className="text-brand-primary" />
+          <section className="bg-white rounded-4xl border-2 border-brand-muted shadow-sm p-6 md:p-8">
+            <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
+                  <CheckCircle2 size={22} className="text-brand-primary" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-extrabold text-gray-900">
+                    Completed Sessions
+                  </h2>
+                  <p className="text-sm text-gray-500 font-medium">
+                    Showing {visibleCompletedSessions.length} of {completedSessions.length} sessions
+                  </p>
+                </div>
               </div>
-              <div>
-                <h2 className="text-xl font-extrabold text-gray-900">
-                  Completed Sessions
-                </h2>
-                <p className="text-sm text-gray-500 font-medium">
-                  Practice sessions you already finished
-                </p>
-              </div>
+
+              {completedSessions.length > 4 && (
+                <Link
+                  href={
+                    showAllCompleted
+                      ? "/participant/sessions"
+                      : "/participant/sessions?showAllCompleted=true"
+                  }
+                  className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                    showAllCompleted
+                      ? "border-2 border-brand-muted bg-white text-gray-700 hover:border-brand-primary hover:text-brand-primary"
+                      : "bg-brand-primary text-white hover:opacity-90"
+                  }`}
+                >
+                  {showAllCompleted ? "Show Less" : "Show More"}
+                </Link>
+              )}
             </div>
 
             {completedSessions.length === 0 ? (
               <EmptyState text="No completed sessions yet." />
             ) : (
               <div className="space-y-4">
-                {completedSessions.map((session) => (
+                {visibleCompletedSessions.map((session) => (
                   <details
                     key={session.id}
                     className="group rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5"

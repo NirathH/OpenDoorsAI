@@ -27,7 +27,7 @@ export default async function InstructorStudentsPage() {
       <InstructorSidebar name={instructorName} />
 
       <main className="flex-1 min-w-0 p-6 md:p-8">
-        <div className="max-w-[1400px] mx-auto">
+        <div className="max-w-350 mx-auto">
           <section className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-8">
             <div>
               <h1 className="text-3xl font-extrabold text-gray-900">Students</h1>
@@ -68,7 +68,7 @@ export default async function InstructorStudentsPage() {
             />
           </section>
 
-          <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm overflow-hidden">
+          <section className="bg-white rounded-4xl border-2 border-brand-muted shadow-sm overflow-hidden">
             <div className="p-5 md:p-6 border-b-2 border-brand-muted bg-brand-light/30">
               <h2 className="text-xl font-extrabold text-gray-900">
                 Assigned Students

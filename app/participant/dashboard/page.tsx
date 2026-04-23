@@ -15,6 +15,7 @@ import GoalCard from "@/components/GoalCard";
 import { requireParticipant } from "@/lib/server/auth/requireParticipant";
 import { getParticipantDashboard } from "@/lib/server/participant/getParticipantDashboard";
 import { formatShortDate } from "@/lib/utils/studentHelpers";
+import Link from "next/link";
 
 export default async function ParticipantDashboardPage() {
   const { supabase, participantId, participantName } = await requireParticipant();
@@ -26,9 +27,9 @@ export default async function ParticipantDashboardPage() {
     <div className="min-h-screen font-sans bg-brand-light">
       <Navbar userName={participantName} userRole="Participant" />
 
-      <main className="max-w-[1400px] mx-auto p-6 md:p-8 flex flex-col lg:flex-row gap-8">
+      <main className="max-w-350 mx-auto p-6 md:p-8 flex flex-col lg:flex-row gap-8">
         <div className="flex-1 flex flex-col gap-8">
-          <section className="bg-white rounded-[2rem] p-10 border-2 border-brand-muted shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
+          <section className="bg-white rounded-4xl p-10 border-2 border-brand-muted shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
             <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-brand-light border-2 border-brand-muted opacity-70" />
             <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-brand-light border-2 border-brand-muted opacity-50" />
 
@@ -110,11 +111,16 @@ export default async function ParticipantDashboardPage() {
               <div className="flex flex-col gap-2">
                 {pendingAssignments.length > 0 ? (
                   pendingAssignments.slice(0, 3).map((assignment) => (
-                    <GoalCard
+                    <Link
                       key={assignment.id}
-                      icon={ClipboardList}
-                      title={assignment.title}
-                    />
+                      href={`/participant/sessions/new?participantId=${participantId}&assignmentId=${assignment.id}`}
+                      className="block"
+                    >
+                      <GoalCard
+                        icon={ClipboardList}
+                        title={assignment.title}
+                      />
+                    </Link>
                   ))
                 ) : (
                   <div className="rounded-2xl border-2 border-dashed border-brand-muted bg-brand-light/30 p-6 text-sm text-gray-500 font-medium">
@@ -126,7 +132,7 @@ export default async function ParticipantDashboardPage() {
           </section>
         </div>
 
-        <aside className="w-full lg:w-[420px] bg-white rounded-[2rem] border-2 border-brand-muted p-8 shadow-sm h-fit">
+        <aside className="w-full lg:w-105 bg-white rounded-4xl border-2 border-brand-muted p-8 shadow-sm h-fit">
           <div className="flex items-start gap-4 mb-6 pb-6 border-b border-brand-muted">
             <div className="bg-brand-light p-3 rounded-2xl border-2 border-brand-muted">
               <MessageSquare size={24} className="text-brand-primary" />
@@ -166,7 +172,7 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="bg-white rounded-[2rem] p-6 border-2 border-brand-muted flex flex-col">
+    <div className="bg-white rounded-4xl p-6 border-2 border-brand-muted flex flex-col">
       <h2 className="text-[15px] font-medium text-gray-700 mb-4 px-2">
         {title}
       </h2>

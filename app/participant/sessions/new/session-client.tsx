@@ -468,7 +468,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
   if (isFinished) {
     return (
       <div className="min-h-screen bg-brand-light flex items-center justify-center px-6 py-10">
-        <div className="w-full max-w-[760px] bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-8 md:p-12">
+        <div className="w-full max-w-190 bg-white rounded-4xl border-2 border-brand-muted shadow-sm p-8 md:p-12">
           <div className="flex flex-col items-center text-center">
             <div className="relative h-24 w-24 rounded-full overflow-hidden border-2 border-brand-muted bg-white shadow-sm mb-6">
               <Image
@@ -489,7 +489,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
               {completionContent.title}
             </h1>
 
-            <p className="mt-4 max-w-[560px] text-gray-600 font-medium leading-relaxed">
+            <p className="mt-4 max-w-140 text-gray-600 font-medium leading-relaxed">
               {completionContent.subtitle}
             </p>
 
@@ -527,7 +527,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
   return (
     <div className="min-h-screen bg-brand-light pb-20">
       <div className="sticky top-0 z-40 bg-white/85 backdrop-blur border-b-2 border-brand-muted">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-8 h-[72px] flex items-center justify-between">
+        <div className="max-w-350 mx-auto px-6 md:px-8 h-18 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/participant/sessions"
@@ -562,9 +562,9 @@ function SessionContent({ accessToken }: { accessToken: string }) {
         </div>
       </div>
 
-      <main className="max-w-[1400px] mx-auto p-6 md:p-8 grid lg:grid-cols-[1fr_420px] gap-8">
+      <main className="max-w-350 mx-auto p-6 md:p-8 grid lg:grid-cols-[1fr_420px] gap-8">
         <section className="flex flex-col gap-6">
-          <div className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8">
+          <div className="bg-white rounded-4xl border-2 border-brand-muted shadow-sm p-6 md:p-8">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h1 className="text-2xl font-extrabold text-gray-900">
@@ -594,7 +594,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
               </div>
             )}
 
-            <div className="mt-6 relative overflow-hidden rounded-[1.5rem] border-2 border-brand-muted bg-black aspect-video">
+            <div className="mt-6 relative overflow-hidden rounded-3xl border-2 border-brand-muted bg-black aspect-video">
               <video
                 ref={videoRef}
                 autoPlay
@@ -645,7 +645,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
           </div>
         </section>
 
-        <aside className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm p-6 md:p-8 h-fit">
+        <aside className="bg-white rounded-4xl border-2 border-brand-muted shadow-sm p-6 md:p-8 h-fit">
           <h2 className="text-xl font-extrabold text-gray-900">
             Session Goal
           </h2>

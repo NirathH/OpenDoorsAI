@@ -17,6 +17,9 @@ export type StudentRow = {
   derived_status: DerivedStudentStatus;
   total_sessions: number;
   avg_score: number;
+  completed_sessions: number;
+  pending_goals: number;
+  completion_rate: number;
 };
 
 /**
@@ -42,39 +45,52 @@ export async function getInstructorStudents(
   const students = studentsData ?? [];
   const studentIds = students.map((student: { user_id: string }) => student.user_id);
 
-  // Default to empty session list if no students exist
+  // Default values if no students exist
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let sessionsData: any[] = [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let assignmentsData: any[] = [];
 
-  // Only query sessions if there are student ids
   if (studentIds.length > 0) {
-    const { data, error } = await supabase
+    const { data: sessions, error: sessionsError } = await supabase
       .from("sessions")
       .select("participant_id, ended_at, created_at, feedback ( feedback_json )")
       .in("participant_id", studentIds)
       .eq("status", "completed")
       .order("ended_at", { ascending: false });
 
-    if (error) {
-      throw new Error(error.message);
+    if (sessionsError) {
+      throw new Error(sessionsError.message);
     }
 
-    sessionsData = data ?? [];
+    sessionsData = sessions ?? [];
+
+    const { data: assignments, error: assignmentsError } = await supabase
+      .from("session_assignments")
+      .select("participant_id, status")
+      .in("participant_id", studentIds);
+
+    if (assignmentsError) {
+      throw new Error(assignmentsError.message);
+    }
+
+    assignmentsData = assignments ?? [];
   }
 
-  // Build dashboard rows for each student
   const rows: StudentRow[] = students.map(
     (student: {
       user_id: string;
       full_name: string | null;
       created_at: string | null;
     }) => {
-      // Sessions that belong to the current student
       const studentSessions = sessionsData.filter(
         (session) => session.participant_id === student.user_id
       );
 
-      // Dates used for streak calculation
+      const studentAssignments = assignmentsData.filter(
+        (assignment) => assignment.participant_id === student.user_id
+      );
+
       const sessionDates = studentSessions
         .map((session) => session.ended_at || session.created_at)
         .filter(Boolean) as string[];
@@ -83,30 +99,52 @@ export async function getInstructorStudents(
       const streakDays = calculateStreak(sessionDates);
       const derivedStatus = deriveStatus(lastSessionAt, student.created_at);
 
-      // Calculate total sessions
       const totalSessions = studentSessions.length;
+      const completedSessions = studentSessions.length;
 
-      // Calculate average score across all scored sessions
+      const totalAssignments = studentAssignments.length;
+      const pendingGoals = studentAssignments.filter(
+        (assignment) => assignment.status !== "completed"
+      ).length;
+
+      const completionRate =
+        totalAssignments > 0
+          ? Math.round((completedSessions / totalAssignments) * 100)
+          : 0;
+
       let totalScore = 0;
       let scoredSessionsCount = 0;
 
       for (const session of studentSessions) {
-        // Handle both single object or array of objects returned by Supabase
-        const fArray = Array.isArray(session.feedback) ? session.feedback : (session.feedback ? [session.feedback] : []);
-        if (fArray.length > 0 && fArray[0].feedback_json && fArray[0].feedback_json.scores) {
+        const fArray = Array.isArray(session.feedback)
+          ? session.feedback
+          : session.feedback
+          ? [session.feedback]
+          : [];
+
+        if (
+          fArray.length > 0 &&
+          fArray[0].feedback_json &&
+          fArray[0].feedback_json.scores
+        ) {
           const s = fArray[0].feedback_json.scores;
-          // Clarity, confidence, relevance are usually out of 10
-          if (typeof s.clarity === "number" && typeof s.confidence === "number" && typeof s.relevance === "number") {
-            // compute average of the 3 components, out of 10.
+
+          if (
+            typeof s.clarity === "number" &&
+            typeof s.confidence === "number" &&
+            typeof s.relevance === "number"
+          ) {
             const sessionAvg = (s.clarity + s.confidence + s.relevance) / 3;
-            // scale to out of 100
             totalScore += sessionAvg * 10;
             scoredSessionsCount++;
           }
         }
       }
 
-      const avgScore = scoredSessionsCount > 0 ? Math.round(totalScore / scoredSessionsCount) : 0;
+      const avgScore =
+        scoredSessionsCount > 0
+          ? Math.round(totalScore / scoredSessionsCount)
+          : 0;
 
       return {
         user_id: student.user_id,
@@ -117,6 +155,9 @@ export async function getInstructorStudents(
         derived_status: derivedStatus,
         total_sessions: totalSessions,
         avg_score: avgScore,
+        completed_sessions: completedSessions,
+        pending_goals: pendingGoals,
+        completion_rate: completionRate,
       };
     }
   );
