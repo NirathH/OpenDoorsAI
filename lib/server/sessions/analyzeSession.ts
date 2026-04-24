@@ -1,6 +1,76 @@
 import OpenAI from "openai";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
+const POSITIVE_EMOTIONS = new Set(["Concentration", "Determination", "Calmness", "Interest"]);
+const NEGATIVE_EMOTIONS = new Set(["Anxiety", "Awkwardness", "Confusion", "Doubt"]);
+
+function processHumeTimeline(rawHumeData: any) {
+  if (!rawHumeData || !Array.isArray(rawHumeData)) return null;
+
+  const dataPoints: { timeRaw: number, score: number }[] = [];
+  for (const file of rawHumeData) {
+    const predictions = file?.results?.predictions;
+    if (!predictions) continue;
+
+    for (const result of predictions) {
+      const grouped = result?.models?.face?.groupedPredictions;
+      if (!grouped) continue;
+
+      for (const group of grouped) {
+        if (!group?.predictions) continue;
+
+        for (const pred of group.predictions) {
+          if (pred.time === undefined || !pred.emotions) continue;
+
+          let posSum = 0;
+          let negSum = 0;
+
+          for (const emotion of pred.emotions) {
+            if (POSITIVE_EMOTIONS.has(emotion.name)) posSum += emotion.score;
+            else if (NEGATIVE_EMOTIONS.has(emotion.name)) negSum += emotion.score;
+          }
+
+          const posAvg = posSum / 4;
+          const negAvg = negSum / 4;
+          let score = 50 + (posAvg * 50) - (negAvg * 50);
+          score = Math.max(0, Math.min(100, Math.round(score)));
+
+          dataPoints.push({ timeRaw: pred.time, score });
+        }
+      }
+    }
+  }
+
+  dataPoints.sort((a, b) => a.timeRaw - b.timeRaw);
+
+  const aggregated = new Map<number, { sum: number; count: number }>();
+  for (const dp of dataPoints) {
+    const sec = Math.floor(dp.timeRaw);
+    if (!aggregated.has(sec)) {
+      aggregated.set(sec, { sum: 0, count: 0 });
+    }
+    const entry = aggregated.get(sec)!;
+    entry.sum += dp.score;
+    entry.count += 1;
+  }
+
+  const finalData: any[] = [];
+  Array.from(aggregated.entries())
+    .sort(([a], [b]) => a - b)
+    .forEach(([sec, val]) => {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      const timeLabel = `${m}:${s.toString().padStart(2, "0")}`;
+      finalData.push({
+        timeRaw: sec,
+        timeLabel,
+        score: Math.round(val.sum / val.count),
+      });
+    });
+
+  return finalData.length > 0 ? finalData : null;
+}
+
 /**
  * Final feedback shape saved in the database.
  */
@@ -113,7 +183,7 @@ function normalizeFeedback(raw: unknown, transcriptText: string): FeedbackJson {
 /**
  * Analyzes one session and saves normalized feedback into the feedback table.
  */
-export async function analyzeSession(sessionId: string, offlineContext?: string) {
+export async function analyzeSession(sessionId: string, offlineContext?: string, rawHumeData?: unknown) {
   try {
     console.log("Analyzing session:", sessionId);
 
@@ -268,6 +338,18 @@ ${transcriptText}
         // If OpenAI fails, use fallback feedback instead of crashing
         console.error("OpenAI analysis failed, using fallback:", openaiError);
         feedbackJson = buildFallbackFeedback(transcriptText);
+      }
+    }
+
+    // Attach the processed timeline data without saving the massive 20MB Hume object
+    if (rawHumeData) {
+      try {
+        const timeline = processHumeTimeline(rawHumeData);
+        if (timeline) {
+          (feedbackJson as any).confidence_timeline = timeline;
+        }
+      } catch (e) {
+        console.error("Failed to process hume timeline", e);
       }
     }
 

@@ -307,11 +307,19 @@ function SessionContent({ accessToken }: { accessToken: string }) {
       setIsFinished(false);
       setSeconds(0);
 
-      // Start audio recording for the backend saving
+      // Start combined video/audio recording for the backend saving
       try {
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         audioStreamRef.current = audioStream;
-        const mediaRecorder = new MediaRecorder(audioStream);
+        
+        let combinedTracks: MediaStreamTrack[] = audioStream.getAudioTracks();
+        if (streamRef.current) {
+          combinedTracks = [...streamRef.current.getVideoTracks(), ...combinedTracks];
+        }
+        const combinedStream = new MediaStream(combinedTracks);
+        
+        // Use video/webm to ensure both video and audio are saved
+        const mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm' });
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
 
@@ -355,28 +363,35 @@ function SessionContent({ accessToken }: { accessToken: string }) {
 
       // Stop local recording and upload
       if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        const uploadPromise = new Promise<void>((resolve) => {
+          mediaRecorderRef.current!.onstop = async () => {
+            const blob = new Blob(audioChunksRef.current, { type: "video/webm" });
+            const formData = new FormData();
+            formData.append("file", blob, "session.webm");
+            formData.append("session_id", sessionId);
+            if (participantId) {
+              formData.append("participant_id", participantId);
+            }
+
+            try {
+              const res = await fetch("/api/recordings/upload", {
+                method: "POST",
+                body: formData,
+              });
+              if (!res.ok) console.error("Upload failed", await res.text());
+            } catch (err) {
+              console.error("Failed to upload recording", err);
+            }
+            resolve();
+          };
+        });
+
         mediaRecorderRef.current.stop();
+        await uploadPromise;
 
         if (audioStreamRef.current) {
           audioStreamRef.current.getTracks().forEach((t) => t.stop());
           audioStreamRef.current = null;
-        }
-
-        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
-        const formData = new FormData();
-        formData.append("file", blob, "session.webm");
-        formData.append("session_id", sessionId);
-        if (participantId) {
-          formData.append("participant_id", participantId);
-        }
-
-        try {
-          await fetch("/api/recordings/upload", {
-            method: "POST",
-            body: formData,
-          });
-        } catch (err) {
-          console.error("Failed to upload recording", err);
         }
       }
 

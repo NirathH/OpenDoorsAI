@@ -140,8 +140,8 @@ export async function POST(req: Request) {
         ? `The user's overall emotions during the session were: ${topEmotions}. Use this to improve coaching feedback.`
         : "";
 
-      // Run AI feedback with emotion context
-      await analyzeSession(sessionId, offlineContext);
+      // Run AI feedback with emotion context, passing predictions so it is saved in the DB
+      await analyzeSession(sessionId, offlineContext, predictions);
 
       return NextResponse.json({ status: "COMPLETED" });
     }

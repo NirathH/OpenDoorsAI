@@ -14,6 +14,7 @@ export type FeedbackData = {
     confidence?: number;
     relevance?: number;
   };
+  confidence_timeline?: any[];
 };
 
 /**

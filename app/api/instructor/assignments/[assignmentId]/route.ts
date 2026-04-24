@@ -29,9 +29,7 @@ export async function POST(req: Request, { params }: RouteContext) {
           { status: 500 }
         );
       }
-    }
-
-    if (intent === "update") {
+    } else if (intent === "update") {
       const title = String(formData.get("title") || "").trim();
 
       if (!title) {
@@ -53,6 +51,11 @@ export async function POST(req: Request, { params }: RouteContext) {
           { status: 500 }
         );
       }
+    } else {
+      return NextResponse.json(
+        { error: "Invalid or missing _intent." },
+        { status: 400 }
+      );
     }
 
     return NextResponse.redirect(new URL("/instructor/assignments", req.url));

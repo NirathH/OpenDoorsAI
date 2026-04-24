@@ -27,17 +27,34 @@ export async function POST(req: Request) {
     const formData = await req.formData();
 
     const session_id = formData.get("session_id")?.toString();
-    const participant_id = formData.get("participant_id")?.toString();
+    let participant_id = formData.get("participant_id")?.toString();
     const upload = formData.get("file");
 
     /**
      * Step 2: Validate required fields
      */
-    if (!session_id || !participant_id) {
+    if (!session_id) {
       return NextResponse.json(
-        { ok: false, error: "session_id and participant_id are required" },
+        { ok: false, error: "session_id is required" },
         { status: 400 }
       );
+    }
+
+    if (!participant_id) {
+      // Fallback: fetch participant_id from sessions table
+      const { data: session } = await supabaseAdmin
+        .from("sessions")
+        .select("participant_id")
+        .eq("id", session_id)
+        .single();
+      if (session?.participant_id) {
+        participant_id = session.participant_id;
+      } else {
+        return NextResponse.json(
+          { ok: false, error: "participant_id is required" },
+          { status: 400 }
+        );
+      }
     }
 
     /**

@@ -11,6 +11,7 @@ import {
 import InstructorSidebar from "@/components/InstructorSidebar";
 import { requireInstructor } from "@/lib/server/auth/requireInstructor";
 import { getParticipantSessionDetails } from "@/lib/server/participant/getParticipantSessionDetails";
+import ConfidenceChart from "@/components/ConfidenceChart";
 
 type PageProps = {
   params: Promise<{
@@ -168,6 +169,10 @@ export default async function InstructorSessionDetailsPage({
               ) : (
                 <EmptyState text="No feedback available yet." />
               )}
+            </ExpandableSection>
+
+            <ExpandableSection title="Confidence Timeline" defaultOpen={true}>
+              <ConfidenceChart chartData={feedbackData?.confidence_timeline} />
             </ExpandableSection>
 
             <ExpandableSection title="Interview Content" defaultOpen={false}>
