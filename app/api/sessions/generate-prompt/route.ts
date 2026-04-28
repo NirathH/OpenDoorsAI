@@ -16,22 +16,25 @@ type GeneratedPromptPayload = {
 };
 
 export async function POST(req: NextRequest) {
+  let assignmentTitle: string | null = null;
+
   try {
     const { assignmentId, participantId } = await req.json();
 
     let goal = "Practice answering interview questions clearly and concisely.";
     let instructions = "Conduct a general practice interview.";
     let participantContext = "";
-    
+
     // Fetch Assignment Details
     if (assignmentId) {
       const { data: assignment } = await supabase
         .from("session_assignments")
-        .select("goal, instructions")
+        .select("goal, instructions, title")
         .eq("id", assignmentId)
         .maybeSingle();
 
       if (assignment) {
+        assignmentTitle = assignment.title ?? null;
         if (assignment.goal) goal = assignment.goal;
         if (assignment.instructions) instructions = assignment.instructions;
       }
@@ -137,7 +140,7 @@ Output MUST be a valid JSON object matching this exact shape:
     };
     
     return NextResponse.json(
-      { success: false, error: "Failed to generate prompt", payload: fallbackPayload },
+      { success: false, error: "Failed to generate prompt", payload: fallbackPayload, title: assignmentTitle },
       { status: 500 }
     );
   }

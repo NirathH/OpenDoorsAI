@@ -246,15 +246,17 @@ function MiniAssignmentCard({
   return (
     <Link
       href={href}
-      className="block rounded-2xl border border-gray-200 bg-gray-50/70 hover:bg-gray-50 transition-colors p-4"
+      className="block rounded-2xl border-2 border-brand-muted bg-brand-light/40 hover:bg-brand-light hover:border-brand-primary transition-colors p-4"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-sm font-bold text-gray-900 truncate">{title}</div>
-          <div className="text-xs text-gray-500 font-medium mt-1 truncate">
+          <div className="text-sm font-extrabold text-gray-900 truncate">
+            {title}
+          </div>
+          <div className="text-xs font-semibold text-brand-primary mt-1 truncate">
             {subtitle}
           </div>
-          <div className="text-xs text-gray-600 mt-2">{meta}</div>
+          <div className="text-xs text-gray-500 font-medium mt-1">{meta}</div>
         </div>
 
         <StatusPill status={status} />
@@ -264,20 +266,19 @@ function MiniAssignmentCard({
 }
 
 function StatusPill({ status }: { status: string }) {
-  let classes =
-    "bg-blue-100 text-blue-700 border-blue-200";
+  let classes = "bg-blue-50 text-blue-700 border-blue-200";
 
   if (status === "completed") {
-    classes = "bg-emerald-100 text-emerald-700 border-emerald-200";
+    classes = "bg-emerald-50 text-emerald-700 border-emerald-200";
   } else if (status === "in_progress") {
-    classes = "bg-amber-100 text-amber-700 border-amber-200";
+    classes = "bg-amber-50 text-amber-700 border-amber-200";
   } else if (status === "overdue") {
-    classes = "bg-red-100 text-red-700 border-red-200";
+    classes = "bg-red-50 text-red-700 border-red-200";
   }
 
   return (
     <span
-      className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold border ${classes}`}
+      className={`shrink-0 inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold border-2 ${classes}`}
     >
       {status.replaceAll("_", " ")}
     </span>

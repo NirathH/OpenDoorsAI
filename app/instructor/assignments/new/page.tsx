@@ -34,7 +34,7 @@ export default async function NewAssignmentPage() {
       <InstructorSidebar name={instructorName} />
 
       <main className="flex-1 min-w-0 p-6 md:p-8">
-        <div className="max-w-[980px] mx-auto">
+        <div className="max-w-245 mx-auto">
           <div className="mb-6">
             <Link
               href="/instructor/assignments"
@@ -45,7 +45,7 @@ export default async function NewAssignmentPage() {
             </Link>
           </div>
 
-          <section className="bg-white rounded-[2rem] border border-green-200 shadow-sm overflow-hidden">
+          <section className="bg-white rounded-4xl border border-green-200 shadow-sm overflow-hidden">
             <div className="border-b border-gray-100 px-6 md:px-8 py-6 md:py-7">
               <div className="flex items-start gap-4">
                 <div className="h-12 w-12 rounded-2xl bg-brand-light border border-brand-muted flex items-center justify-center text-brand-primary shrink-0">
@@ -220,7 +220,7 @@ function SectionCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-[1.5rem] border border-gray-500 bg-gray-50/60 p-5 md:p-6">
+    <div className="rounded-3xl border border-gray-500 bg-gray-50/60 p-5 md:p-6">
       <div className="flex items-start gap-3 mb-5">
         <div className="h-10 w-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-brand-primary shrink-0">
           {icon}

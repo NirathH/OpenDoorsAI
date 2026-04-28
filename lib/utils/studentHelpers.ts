@@ -106,12 +106,19 @@ export function deriveStatus(
   if (!lastSessionAt) {
     if (!createdAt) return "New";
     const createdDiff = differenceInDays(now, new Date(createdAt));
-    return createdDiff <= 7 ? "New" : "Inactive";
+    return createdDiff <= 5 ? "New" : "Inactive";
   }
 
   const daysSinceLast = differenceInDays(now, new Date(lastSessionAt));
 
-  if (daysSinceLast <= 7) return "Active";
+  if (daysSinceLast <= 5) return "Active";
   if (daysSinceLast <= 14) return "Needs Attention";
   return "Inactive";
 }
+
+/*
+New — never had a session + account created within 5 days (or no dates at all)
+Active — had a session within the last 5 days
+Needs Attention — last session was 7–14 days ago
+Inactive — last session was 15+ days ago (or never had a session and account is older than 7 days)
+*/

@@ -48,7 +48,7 @@ export default async function InstructorSessionDetailsPage({
       <InstructorSidebar name={instructorName} />
 
       <main className="flex-1 min-w-0 p-6 md:p-8">
-        <div className="max-w-[1000px] mx-auto">
+        <div className="max-w-250 mx-auto">
           <div className="mb-8 flex flex-col gap-4">
             <Link
               href={`/instructor/students/${studentId}`}
@@ -94,7 +94,7 @@ export default async function InstructorSessionDetailsPage({
               </div>
             </ExpandableSection>
 
-            <ExpandableSection title="AI Feedback" defaultOpen={true}>
+            <ExpandableSection title="Session Feedback" defaultOpen={true}>
               {feedbackData ? (
                 <div className="space-y-5">
                   {feedbackData.summary && (

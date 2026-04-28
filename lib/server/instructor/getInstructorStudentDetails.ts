@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation";
 import { SupabaseClient } from "@supabase/supabase-js";
 
-/**
- * Full participant profile shape used in the instructor student details page.
- */
 export type StudentProfileRow = {
   user_id: string;
   full_name: string | null;
@@ -14,9 +11,6 @@ export type StudentProfileRow = {
   coach_notes: string | null;
 };
 
-/**
- * Session shape used for a student's session history.
- */
 export type SessionRow = {
   id: string;
   title: string | null;
@@ -29,9 +23,11 @@ export type SessionRow = {
   assignment_id: string | null;
 };
 
-/**
- * Final result returned by this helper.
- */
+type AssignmentRow = {
+  id: string;
+  status: string | null;
+};
+
 type StudentDetailsResult = {
   studentProfile: StudentProfileRow;
   safeName: string;
@@ -43,16 +39,12 @@ type StudentDetailsResult = {
   };
 };
 
-/**
- * Gets one participant that belongs to the given instructor,
- * along with that participant's sessions and summary stats.
- */
 export async function getInstructorStudentDetails(
   supabase: SupabaseClient,
   instructorId: string,
   studentId: string
 ): Promise<StudentDetailsResult> {
-  // Fetch the participant profile, but only if they belong to this instructor
+  // Fetch the participant profile
   const { data: studentData, error: studentError } = await supabase
     .from("profiles")
     .select(
@@ -67,7 +59,6 @@ export async function getInstructorStudentDetails(
     throw new Error(studentError.message);
   }
 
-  // If no matching student exists, return 404
   if (!studentData) {
     notFound();
   }
@@ -89,14 +80,34 @@ export async function getInstructorStudentDetails(
 
   const sessions = (sessionsData ?? []) as SessionRow[];
 
-  // Safe display name fallback
+  // Fetch assignments for this participant that are still pending (never started)
+  // These have no session row yet so sessions.length alone would under-count
+  const { data: assignmentsData, error: assignmentsError } = await supabase
+    .from("session_assignments")
+    .select("id, status")
+    .eq("participant_id", studentId)
+    .eq("instructor_id", instructorId);
+
+  if (assignmentsError) {
+    throw new Error(assignmentsError.message);
+  }
+
+  const assignments = (assignmentsData ?? []) as AssignmentRow[];
+
   const safeName = studentProfile.full_name?.trim() || "Unnamed Student";
 
-  // Simple session stats
-  const totalSessions = sessions.length;
+  // totalSessions = actual session rows + assignments still pending (not yet started)
+  // pending assignments have no session row so we add them separately
+  const pendingAssignments = assignments.filter(
+    (a) => a.status === "assigned"
+  ).length;
+
+  const totalSessions = sessions.length + pendingAssignments;
+
   const completedSessions = sessions.filter(
     (session) => session.status === "completed"
   ).length;
+
   const latestSession = sessions[0] ?? null;
 
   return {

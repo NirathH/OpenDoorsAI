@@ -55,14 +55,9 @@ export type InstructorAnalytics = {
 
 function formatDuration(seconds: number): string {
   if (!seconds || seconds <= 0) return "0m";
-
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.round((seconds % 3600) / 60);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-
+  if (hours > 0) return `${hours}h ${minutes}m`;
   return `${minutes}m`;
 }
 
@@ -88,7 +83,6 @@ export async function getInstructorAnalytics(
   const studentRows = (students ?? []) as StudentRow[];
   const participantIds = studentRows.map((s) => s.user_id);
 
-  // Early return if no students
   if (participantIds.length === 0) {
     return {
       totalStudents: 0,
@@ -98,17 +92,13 @@ export async function getInstructorAnalytics(
       completionRate: 0,
       averageSessionDurationSeconds: 0,
       averageSessionDurationLabel: "0m",
-      assignedVsCompleted: {
-        assigned: 0,
-        completed: 0,
-        pending: 0,
-      },
+      assignedVsCompleted: { assigned: 0, completed: 0, pending: 0 },
       sessionsByStudent: [],
       sessionsOverTime: [],
     };
   }
 
-  // 2) Get assignments for this instructor
+  // 2) Get all assignments for this instructor
   const { data: assignments, error: assignmentsError } = await supabase
     .from("session_assignments")
     .select("id, participant_id, instructor_id, status, created_at, due_at")
@@ -119,39 +109,47 @@ export async function getInstructorAnalytics(
   }
 
   const assignmentRows = (assignments ?? []) as AssignmentRow[];
+  const totalAssignments = assignmentRows.length;
   const assignmentIds = assignmentRows.map((a) => a.id);
 
-  // 3) Get sessions for this instructor's participants
-  const { data: sessions, error: sessionsError } = await supabase
-    .from("sessions")
-    .select(
-      "id, participant_id, assignment_id, status, duration_seconds, created_at, ended_at"
-    )
-    .in("participant_id", participantIds);
+  // 3) Get all sessions for this instructor's participants
+  //    Used for duration averages, sessions-over-time, and per-student counts
+  let allSessionRows: SessionRow[] = [];
 
-  if (sessionsError) {
-    throw new Error(`Failed to load sessions: ${sessionsError.message}`);
+  if (participantIds.length > 0) {
+    const { data: sessionsData, error: sessionsError } = await supabase
+      .from("sessions")
+      .select(
+        "id, participant_id, assignment_id, status, duration_seconds, created_at, ended_at"
+      )
+      .in("participant_id", participantIds);
+
+    if (sessionsError) {
+      throw new Error(`Failed to load sessions: ${sessionsError.message}`);
+    }
+
+    allSessionRows = (sessionsData ?? []) as SessionRow[];
   }
 
-  const sessionRows = (sessions ?? []) as SessionRow[];
-
-  // 4) Totals
+  // 4) Compute top-level totals
+  //    Same logic as getInstructorStudentDetails:
+  //    totalSessions = session rows + assignments still "pending" (never started, no session row yet)
+  //    completedSessions = session rows with status "completed"
+  //    pendingAssignments = assignments with status "pending" (never started)
   const totalStudents = studentRows.length;
-  const totalAssignments = assignmentRows.length;
 
-  // Define "completed" conservatively
-  const completedSessionRows = sessionRows.filter(
-    (s) => s.status === "completed" || !!s.ended_at
+  const pendingAssignmentRows = assignmentRows.filter(
+    (a) => a.status === "assigned"
   );
+  const pendingAssignments = pendingAssignmentRows.length;
 
+  const completedSessionRows = allSessionRows.filter(
+    (s) => s.status === "completed"
+  );
   const completedSessions = completedSessionRows.length;
 
-  // Pending assignments:
-  // If assignment status exists and is not completed, count it as pending.
-  // If your app uses different statuses, adjust here.
-  const pendingAssignments = assignmentRows.filter(
-    (a) => a.status !== "completed"
-  ).length;
+  // Total = actual session rows (started or completed) + pending assignments (never started)
+  const totalSessions = allSessionRows.length + pendingAssignments;
 
   const completionRate =
     totalAssignments > 0
@@ -164,86 +162,83 @@ export async function getInstructorAnalytics(
 
   const averageSessionDurationSeconds =
     durations.length > 0
-      ? Math.round(
-          durations.reduce((sum, value) => sum + value, 0) / durations.length
-        )
+      ? Math.round(durations.reduce((sum, v) => sum + v, 0) / durations.length)
       : 0;
 
   const averageSessionDurationLabel = formatDuration(
     averageSessionDurationSeconds
   );
 
-  // 5) Assigned vs completed
+  // 5) Assigned vs Completed summary
   const assignedVsCompleted = {
     assigned: totalAssignments,
     completed: completedSessions,
     pending: pendingAssignments,
   };
 
-  // 6) Sessions by student
+  // 6) Sessions by Student — same logic as getInstructorStudentDetails
+  //    totalSessions     = session rows for student + their pending assignments
+  //    completedSessions = session rows with status "completed"
   const studentNameMap = new Map(
     studentRows.map((s) => [s.user_id, s.full_name || "Unnamed Student"])
   );
 
-  const sessionCountMap = new Map<
-    string,
-    { totalSessions: number; completedSessions: number }
-  >();
-
+  // Count session rows per participant
+  const sessionCountMap = new Map<string, number>();
+  const completedCountMap = new Map<string, number>();
   for (const participantId of participantIds) {
-    sessionCountMap.set(participantId, {
-      totalSessions: 0,
-      completedSessions: 0,
-    });
+    sessionCountMap.set(participantId, 0);
+    completedCountMap.set(participantId, 0);
+  }
+  for (const session of allSessionRows) {
+    sessionCountMap.set(
+      session.participant_id,
+      (sessionCountMap.get(session.participant_id) ?? 0) + 1
+    );
+    if (session.status === "completed") {
+      completedCountMap.set(
+        session.participant_id,
+        (completedCountMap.get(session.participant_id) ?? 0) + 1
+      );
+    }
   }
 
-  for (const session of sessionRows) {
-    const current = sessionCountMap.get(session.participant_id) ?? {
-      totalSessions: 0,
-      completedSessions: 0,
-    };
-
-    current.totalSessions += 1;
-
-    if (session.status === "completed" || session.ended_at) {
-      current.completedSessions += 1;
-    }
-
-    sessionCountMap.set(session.participant_id, current);
+  // Count pending assignments per participant
+  const pendingCountMap = new Map<string, number>();
+  for (const participantId of participantIds) {
+    pendingCountMap.set(participantId, 0);
+  }
+  for (const assignment of pendingAssignmentRows) {
+    pendingCountMap.set(
+      assignment.participant_id,
+      (pendingCountMap.get(assignment.participant_id) ?? 0) + 1
+    );
   }
 
   const sessionsByStudent: SessionsByStudentItem[] = participantIds
-    .map((participantId) => {
-      const counts = sessionCountMap.get(participantId) ?? {
-        totalSessions: 0,
-        completedSessions: 0,
-      };
-
-      return {
-        participantId,
-        studentName: studentNameMap.get(participantId) || "Unnamed Student",
-        completedSessions: counts.completedSessions,
-        totalSessions: counts.totalSessions,
-      };
-    })
+    .map((participantId) => ({
+      participantId,
+      studentName: studentNameMap.get(participantId) || "Unnamed Student",
+      completedSessions: completedCountMap.get(participantId) ?? 0,
+      // sessions started/completed + assignments never started
+      totalSessions:
+        (sessionCountMap.get(participantId) ?? 0) +
+        (pendingCountMap.get(participantId) ?? 0),
+    }))
     .sort((a, b) => b.completedSessions - a.completedSessions);
 
-  // 7) Sessions over time
+  // 7) Sessions over time — completed session rows, bucketed by day
   const dateMap = new Map<string, number>();
 
   for (const session of completedSessionRows) {
     const sourceDate = session.ended_at || session.created_at;
     if (!sourceDate) continue;
-
     const day = new Date(sourceDate).toISOString().slice(0, 10);
     dateMap.set(day, (dateMap.get(day) ?? 0) + 1);
   }
 
   const sessionsOverTime: SessionsOverTimeItem[] = Array.from(dateMap.entries())
-    .map(([date, completedSessions]) => ({
-      date,
-      completedSessions,
-    }))
+    .map(([date, completedSessions]) => ({ date, completedSessions }))
     .sort((a, b) => a.date.localeCompare(b.date));
 
   return {

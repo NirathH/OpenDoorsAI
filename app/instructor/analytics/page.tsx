@@ -15,7 +15,7 @@ export default async function InstructorAnalyticsPage() {
       <InstructorSidebar name={instructorName} />
 
       <main className="flex-1 min-w-0 p-4 md:p-8">
-        <div className="max-w-[1500px] mx-auto">
+        <div className="max-w-375 mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">
               Analytics Dashboard

@@ -373,7 +373,7 @@ export default function InstructorAnalyticsDashboard({ analytics }: Props) {
         >
           {assignedVsCompletedData.some((d) => d.value > 0) ? (
             <div ref={assignedChartRef}>
-              <div className="h-[280px]">
+              <div className="h-70">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={assignedVsCompletedData} barCategoryGap="40%">
                     <CartesianGrid
@@ -429,7 +429,7 @@ export default function InstructorAnalyticsDashboard({ analytics }: Props) {
         >
           {pieData.some((d) => d.value > 0) ? (
             <div ref={pieChartRef}>
-              <div className="h-[280px]">
+              <div className="h-70">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -496,7 +496,7 @@ export default function InstructorAnalyticsDashboard({ analytics }: Props) {
           >
             {sessionsOverTimeData.length > 0 ? (
               <div ref={lineChartRef}>
-                <div className="h-[300px]">
+                <div className="h-75">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={sessionsOverTimeData}>
                       <CartesianGrid
@@ -609,7 +609,7 @@ export default function InstructorAnalyticsDashboard({ analytics }: Props) {
         >
           {sessionsByStudentData.length > 0 ? (
             <div ref={studentsChartRef}>
-              <div className="h-[320px]">
+              <div className="h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={sessionsByStudentData} barCategoryGap="35%">
                     <CartesianGrid

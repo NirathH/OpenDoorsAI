@@ -157,6 +157,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
 
   const participantId = searchParams.get("participantId");
   const assignmentId = searchParams.get("assignmentId");
+  
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -175,6 +176,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
   const [dynamicScenario, setDynamicScenario] = useState("");
   const [dynamicSystemPrompt, setDynamicSystemPrompt] = useState("");
   const [dynamicTips, setDynamicTips] = useState<string[]>([]);
+  const [assignmentTitle, setAssignmentTitle] = useState("");
 
   const typedMessages = messages as VoiceMessage[];
 
@@ -240,10 +242,11 @@ function SessionContent({ accessToken }: { accessToken: string }) {
         const data = await res.json();
         
         if (!cancelled && data.payload) {
-          setDynamicScenario(data.payload.scenario);
-          setDynamicSystemPrompt(data.payload.systemPrompt);
-          setDynamicTips(data.payload.quickTips);
-        }
+        setDynamicScenario(data.payload.scenario);
+        setDynamicSystemPrompt(data.payload.systemPrompt);
+        setDynamicTips(data.payload.quickTips);
+        if (data.title) setAssignmentTitle(data.title); // add this
+      }
       } catch (err) {
         console.error("Failed to load prompt", err);
       } finally {
@@ -287,7 +290,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
         },
         body: JSON.stringify({
           assignmentId: assignmentId ?? null,
-          title: "Practice Session",
+          title: assignmentTitle ?? "Practice Session",
           humeConfigId: process.env.NEXT_PUBLIC_HUME_CONFIG_ID ?? null,
         }),
       });

@@ -170,7 +170,7 @@ function Card({ title, subtitle, children }: { title: string; subtitle?: string;
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="h-[220px] flex items-center justify-center rounded-2xl border-2 border-dashed border-brand-muted bg-brand-light/20 text-gray-400 text-sm font-semibold">
+    <div className="h-55 flex items-center justify-center rounded-2xl border-2 border-dashed border-brand-muted bg-brand-light/20 text-gray-400 text-sm font-semibold">
       {label}
     </div>
   );
@@ -241,7 +241,7 @@ export default function ParticipantProgressDashboard({ participantName, particip
 
         <Card title="Goal Activity" subtitle="Sessions linked to each assigned goal">
           {progressByGoalData.length > 0 ? (
-            <div className="h-[280px]">
+            <div className="h-70">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={progressByGoalData} barCategoryGap="40%">
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
@@ -261,7 +261,7 @@ export default function ParticipantProgressDashboard({ participantName, particip
 
         <Card title="Sessions Over Time" subtitle="Completed sessions by date">
           {sessionsOverTimeData.length > 0 ? (
-            <div className="h-[280px]">
+            <div className="h-70">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={sessionsOverTimeData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
