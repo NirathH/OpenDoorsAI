@@ -11,14 +11,17 @@ import {
   LogOut,
   Menu,
   X,
+  UserCircle,
 } from "lucide-react";
 import { signOut } from "@/app/actions/auth";
 
 const items = [
+  { label: "Profile", href: "/instructor/profile", icon: UserCircle },  
   { label: "Overview", href: "/instructor/dashboard", icon: LayoutDashboard },
   { label: "Students", href: "/instructor/students", icon: Users },
   { label: "Assignments", href: "/instructor/assignments", icon: ClipboardList },
   { label: "Analytics", href: "/instructor/analytics", icon: BarChart3 },
+  
 ];
 
 function cn(...classes: Array<string | false | undefined | null>) {

@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import type React from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -11,6 +12,7 @@ import {
 import Navbar from "@/components/participantNavbar";
 import { requireParticipant } from "@/lib/server/auth/requireParticipant";
 import { getParticipantSessionDetails } from "@/lib/server/participant/getParticipantSessionDetails";
+import { getParticipantProfile } from "@/lib/server/participant/getParticipantProfile";
 
 type PageProps = {
   params: Promise<{
@@ -35,10 +37,19 @@ export default async function ParticipantSessionDetailsPage({
 }: PageProps) {
   const { sessionId } = await params;
 
-  const { supabase, participantId, participantName } = await requireParticipant();
+  const { supabase, participantId, participantName } =
+    await requireParticipant();
 
   const { session, transcriptBlocks, feedbackData, instructorName } =
     await getParticipantSessionDetails(supabase, participantId, sessionId);
+
+  const { instructorName: profileInstructorName } =
+    await getParticipantProfile(supabase, participantId);
+
+  const finalInstructorName =
+    profileInstructorName?.trim() ||
+    instructorName?.trim() ||
+    "Not assigned yet";
 
   return (
     <div className="min-h-screen bg-brand-light font-sans">
@@ -85,7 +96,7 @@ export default async function ParticipantSessionDetailsPage({
               <InfoCard
                 icon={<User size={18} />}
                 label="Instructor"
-                value={instructorName}
+                value={finalInstructorName}
               />
             </div>
           </ExpandableSection>

@@ -171,3 +171,72 @@ export async function updatePassword(formData: FormData): Promise<void> {
     )}`
   );
 }
+export async function updateInstructorPassword(
+  formData: FormData
+): Promise<void> {
+  const currentPassword = String(formData.get("currentPassword") || "");
+  const newPassword = String(formData.get("newPassword") || "");
+  const confirmPassword = String(formData.get("confirmPassword") || "");
+
+  const redirectPath = "/instructor/profile";
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    redirect(
+      `${redirectPath}?error=${encodeMessage(
+        "All password fields are required."
+      )}`
+    );
+  }
+
+  if (newPassword !== confirmPassword) {
+    redirect(
+      `${redirectPath}?error=${encodeMessage("New passwords do not match.")}`
+    );
+  }
+
+  if (newPassword.length < 6) {
+    redirect(
+      `${redirectPath}?error=${encodeMessage(
+        "New password must be at least 6 characters."
+      )}`
+    );
+  }
+
+  const supabase = await createSupabaseServer();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user || !user.email) {
+    redirect(
+      `${redirectPath}?error=${encodeMessage("Could not load current user.")}`
+    );
+  }
+
+  const { error: verifyError } = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: currentPassword,
+  });
+
+  if (verifyError) {
+    redirect(
+      `${redirectPath}?error=${encodeMessage("Current password is incorrect.")}`
+    );
+  }
+
+  const { error: updateError } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
+
+  if (updateError) {
+    redirect(`${redirectPath}?error=${encodeMessage(updateError.message)}`);
+  }
+
+  redirect(
+    `${redirectPath}?success=${encodeMessage(
+      "Password updated successfully."
+    )}`
+  );
+}

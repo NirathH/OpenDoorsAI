@@ -228,7 +228,7 @@ function ExpandableSection({
   return (
     <details
       open={defaultOpen}
-      className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm"
+      className="bg-white rounded-4xl border-2 border-brand-muted shadow-sm"
     >
       <summary className="cursor-pointer list-none p-6 md:p-8 flex items-center justify-between">
         <h2 className="text-xl font-extrabold text-gray-900">{title}</h2>
