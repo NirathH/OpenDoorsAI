@@ -30,7 +30,7 @@ export default async function InstructorProfilePage({
 
   return (
     <div className="min-h-screen bg-brand-light flex">
-      <InstructorSidebar userName={instructorName} userRole="Instructor" />
+      <InstructorSidebar name={instructorName} />
 
       <main className="flex-1 px-8 py-10 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
