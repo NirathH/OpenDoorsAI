@@ -2,15 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { createSupabaseServer } from "@/lib/supabaseServer";
 
-/**
- * POST /api/sessions/create
- *
- * Purpose:
- * - Create a new session for a participant
- * - Optionally link it to an assignment
- * - Use assignment title when session comes from an assignment
- * - Mark assignment as "in_progress" if used
- */
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const supabaseServer = await createSupabaseServer();
@@ -77,7 +70,7 @@ export async function POST(req: NextRequest) {
       if (assignment.participant_id !== authUserId) {
         return NextResponse.json(
           { error: "Assignment does not belong to this participant" },
-          { status: 400 }
+          { status: 403 }
         );
       }
 
@@ -114,7 +107,8 @@ export async function POST(req: NextRequest) {
       const { error: assignmentUpdateError } = await supabaseAdmin
         .from("session_assignments")
         .update({ status: "in_progress" })
-        .eq("id", assignmentId);
+        .eq("id", assignmentId)
+        .eq("participant_id", authUserId);
 
       if (assignmentUpdateError) {
         console.error(

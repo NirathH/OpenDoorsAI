@@ -15,6 +15,7 @@ import {
   TimerReset,
   Activity,
   Target,
+  Sparkles,
 } from "lucide-react";
 import InstructorSidebar from "@/components/InstructorSidebar";
 import { requireInstructor } from "@/lib/server/auth/requireInstructor";
@@ -30,12 +31,15 @@ import {
 } from "@/lib/utils/studentHelpers";
 
 type PageProps = {
-  params: Promise<{
-    studentId: string;
-  }>;
-  searchParams?: Promise<{
-    showAll?: string;
-  }>;
+  params: Promise<{ studentId: string }>;
+  searchParams?: Promise<{ showAll?: string }>;
+};
+
+type FeedbackRow = {
+  session_id: string;
+  feedback_json: {
+    summary?: string;
+  } | null;
 };
 
 export default async function StudentDetailsPage({
@@ -51,6 +55,29 @@ export default async function StudentDetailsPage({
     await getInstructorStudentDetails(supabase, instructorId, studentId);
 
   const visibleSessions = showAll ? sessions : sessions.slice(0, 5);
+
+  const sessionIds = sessions.map((session) => session.id);
+
+  const { data: feedbackRows, error: feedbackError } =
+    sessionIds.length > 0
+      ? await supabase
+          .from("feedback")
+          .select("session_id, feedback_json")
+          .in("session_id", sessionIds)
+      : { data: [], error: null };
+
+  if (feedbackError) {
+    console.error("Feedback summary error:", feedbackError);
+  }
+
+  const feedbackSummaryBySessionId = new Map<string, string>();
+
+  ((feedbackRows ?? []) as FeedbackRow[]).forEach((row) => {
+    const summary = row.feedback_json?.summary?.trim();
+    if (summary) {
+      feedbackSummaryBySessionId.set(row.session_id, summary);
+    }
+  });
 
   const completedSessions = stats.completedSessions ?? 0;
   const totalSessions = stats.totalSessions ?? 0;
@@ -72,9 +99,7 @@ export default async function StudentDetailsPage({
       : 0;
 
   const latestActivity = stats.latestSession
-    ? formatShortDate(
-        stats.latestSession.ended_at || stats.latestSession.created_at
-      )
+    ? formatShortDate(stats.latestSession.ended_at || stats.latestSession.created_at)
     : "—";
 
   const recentCompletedCount = sessions.filter(
@@ -198,8 +223,8 @@ export default async function StudentDetailsPage({
                 </div>
 
                 <p className="text-sm text-gray-600 font-medium leading-6">
-                  <span className="font-bold text-gray-900">{safeName}</span> has
-                  completed{" "}
+                  <span className="font-bold text-gray-900">{safeName}</span>{" "}
+                  has completed{" "}
                   <span className="font-bold text-gray-900">
                     {completedSessions}
                   </span>{" "}
@@ -235,18 +260,12 @@ export default async function StudentDetailsPage({
                 </h3>
 
                 <div className="space-y-3">
-                  <InsightRow
-                    label="Student Name"
-                    value={safeName}
-                  />
+                  <InsightRow label="Student Name" value={safeName} />
                   <InsightRow
                     label="Completed Recently"
                     value={`${recentCompletedCount}`}
                   />
-                  <InsightRow
-                    label="Latest Activity"
-                    value={latestActivity}
-                  />
+                  <InsightRow label="Latest Activity" value={latestActivity} />
                   <InsightRow
                     label="Average Duration"
                     value={formatDuration(averageDurationSeconds)}
@@ -312,57 +331,64 @@ export default async function StudentDetailsPage({
               </div>
             ) : (
               <div className="p-4 md:p-6 space-y-4">
-                {visibleSessions.map((session: SessionRow) => (
-                  <details
-                    key={session.id}
-                    className="group rounded-2xl border-2 border-brand-muted bg-brand-light/20 overflow-hidden"
-                  >
-                    <summary className="list-none cursor-pointer p-5">
-                      <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-start gap-3">
-                            <div className="mt-1 text-gray-500 transition-transform group-open:rotate-180">
-                              <ChevronDown size={18} />
-                            </div>
+                {visibleSessions.map((session: SessionRow) => {
+                  const feedbackSummary = feedbackSummaryBySessionId.get(
+                    session.id
+                  );
 
-                            <div className="min-w-0">
-                              <h3 className="text-lg font-bold text-gray-900 truncate">
-                                {session.title || "Practice Session"}
-                              </h3>
+                  return (
+                    <details
+                      key={session.id}
+                      className="group rounded-2xl border-2 border-brand-muted bg-brand-light/20 overflow-hidden"
+                    >
+                      <summary className="list-none cursor-pointer p-5">
+                        <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start gap-3">
+                              <div className="mt-1 text-gray-500 transition-transform group-open:rotate-180">
+                                <ChevronDown size={18} />
+                              </div>
 
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                <Pill text={`Status: ${session.status}`} />
-                                <Pill
-                                  text={`Started: ${formatShortDate(
-                                    session.started_at || session.created_at
-                                  )}`}
-                                />
-                                <Pill
-                                  text={`Duration: ${formatDuration(
-                                    session.duration_seconds
-                                  )}`}
-                                />
+                              <div className="min-w-0">
+                                <h3 className="text-lg font-bold text-gray-900 truncate">
+                                  {session.title || "Practice Session"}
+                                </h3>
+
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  <Pill text={`Status: ${session.status}`} />
+                                  <Pill
+                                    text={`Started: ${formatShortDate(
+                                      session.started_at || session.created_at
+                                    )}`}
+                                  />
+                                  <Pill
+                                    text={`Duration: ${formatDuration(
+                                      session.duration_seconds
+                                    )}`}
+                                  />
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="flex items-center gap-3 pl-8 xl:pl-0">
-                          <span className="text-sm font-semibold text-gray-500">
-                            {session.ended_at
-                              ? `Ended ${formatShortDate(session.ended_at)}`
-                              : "Not finished"}
-                          </span>
-                          <span className="inline-flex items-center rounded-xl border-2 border-brand-muted bg-white px-3 py-2 text-sm font-semibold text-gray-700">
-                            Details
-                          </span>
+                          <div className="flex items-center gap-3 pl-8 xl:pl-0">
+                            <span className="text-sm font-semibold text-gray-500">
+                              {session.ended_at
+                                ? `Ended ${formatShortDate(session.ended_at)}`
+                                : "Not finished"}
+                            </span>
+                            <span className="inline-flex items-center rounded-xl border-2 border-brand-muted bg-white px-3 py-2 text-sm font-semibold text-gray-700">
+                              <span className="group-open:hidden">Expand</span>
+                              <span className="hidden group-open:inline">
+                                Minimize
+                              </span>
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    </summary>
+                      </summary>
 
-                    <div className="border-t-2 border-brand-muted bg-white p-5">
-                      <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
-                        <div>
+                      <div className="border-t-2 border-brand-muted bg-white p-5">
+                        <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
                           <div className="flex flex-wrap gap-2">
                             <Pill text={`Status: ${session.status}`} />
                             <Pill
@@ -377,33 +403,52 @@ export default async function StudentDetailsPage({
                               )}`}
                             />
                           </div>
+
+                          <Link
+                            href={`/instructor/students/${studentId}/sessions/${session.id}`}
+                            className="inline-flex items-center gap-2 rounded-xl border-2 border-brand-muted bg-brand-light px-4 py-2 text-sm font-semibold text-gray-800 hover:border-brand-primary hover:bg-white transition-colors"
+                          >
+                            View Full Feedback
+                          </Link>
                         </div>
 
-                        <Link
-                          href={`/instructor/students/${studentId}/sessions/${session.id}`}
-                          className="inline-flex items-center gap-2 rounded-xl border-2 border-brand-muted bg-brand-light px-4 py-2 text-sm font-semibold text-gray-800 hover:border-brand-primary hover:bg-white transition-colors"
-                        >
-                          View Session
-                        </Link>
-                      </div>
+                        {feedbackSummary ? (
+                          <div className="mt-4 rounded-2xl bg-brand-light/20 border-2 border-brand-muted p-5">
+                            <div className="flex items-center gap-2 mb-3">
+                              <div className="h-9 w-9 rounded-xl bg-white border border-brand-muted flex items-center justify-center text-brand-primary">
+                                <Sparkles size={17} />
+                              </div>
+                              <div>
+                                <div className="text-sm font-extrabold text-gray-900">
+                                  Session Summary
+                                </div>
+                                <div className="text-xs font-semibold text-gray-500">
+                                  AI feedback overview only
+                                </div>
+                              </div>
+                            </div>
 
-                      {session.compact_transcript ? (
-                        <div className="mt-4 rounded-xl bg-brand-light/20 border border-brand-muted p-4">
-                          <div className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">
-                            Saved Summary
+                            <p className="text-sm text-gray-700 font-medium leading-6">
+                              {feedbackSummary}
+                            </p>
                           </div>
-                          <p className="text-sm text-gray-700 whitespace-pre-line leading-6">
-                            {session.compact_transcript}
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="mt-4 rounded-xl border border-dashed border-brand-muted p-4 text-sm text-gray-500">
-                          No saved summary for this session yet.
-                        </div>
-                      )}
-                    </div>
-                  </details>
-                ))}
+                        ) : (
+                          <div className="mt-4 rounded-2xl border-2 border-dashed border-brand-muted bg-brand-light/10 p-5">
+                            <div className="flex items-center gap-2 mb-2 text-gray-500">
+                              <Sparkles size={16} />
+                              <span className="text-sm font-extrabold">
+                                Session Summary
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-500 font-medium leading-6">
+                              No feedback summary available yet.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </details>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -413,13 +458,7 @@ export default async function StudentDetailsPage({
   );
 }
 
-function StatCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[1.75rem] border-2 border-brand-muted bg-white p-5 shadow-sm">
       <p className="text-sm font-semibold text-gray-500">{label}</p>
@@ -451,13 +490,7 @@ function DashboardCard({
   );
 }
 
-function InsightRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function InsightRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-xl border border-brand-muted bg-brand-light/20 px-3 py-2">
       <div className="text-xs font-semibold text-gray-500">{label}</div>
@@ -474,13 +507,7 @@ function Pill({ text }: { text: string }) {
   );
 }
 
-function InfoBadge({
-  icon,
-  text,
-}: {
-  icon: React.ReactNode;
-  text: string;
-}) {
+function InfoBadge({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <span className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-sm font-semibold border-2 border-brand-muted bg-white text-gray-700">
       {icon}

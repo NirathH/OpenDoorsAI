@@ -1,13 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabaseAdmin";
+import { createSupabaseServer } from "@/lib/supabaseServer";
+import { analyzeSession } from "@/lib/server/sessions/analyzeSession";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+export const dynamic = "force-dynamic";
+
+type VideoAnalysisStats = {
+  framesAnalyzed?: number;
+  faceDetectedFrames?: number;
+  lookingAwayFrames?: number;
+  smileFrames?: number;
+  eyeContactPercent?: number;
+  faceDetectedPercent?: number;
+  lookingAwayCount?: number;
+  avgSmileScore?: number;
+};
 
 export async function POST(req: NextRequest) {
   try {
+    const supabaseServer = await createSupabaseServer();
+
+    const { data: authData, error: authError } =
+      await supabaseServer.auth.getUser();
+
+    if (authError || !authData.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const authUserId = authData.user.id;
     const body = await req.json();
 
     const {
@@ -15,16 +35,15 @@ export async function POST(req: NextRequest) {
       compactTranscript,
       durationSeconds,
       transcriptStatus,
+      videoAnalysis,
     }: {
       sessionId?: string;
       compactTranscript?: string;
       durationSeconds?: number;
       transcriptStatus?: string;
+      videoAnalysis?: VideoAnalysisStats | null;
     } = body;
 
-    // ==============================
-    // 1. VALIDATION
-    // ==============================
     if (!sessionId) {
       return NextResponse.json(
         { error: "sessionId is required" },
@@ -32,142 +51,112 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const safeTranscript = (compactTranscript ?? "").trim();
-    const safeDuration =
-      typeof durationSeconds === "number" && durationSeconds >= 0
-        ? durationSeconds
-        : 0;
-
     const endedAt = new Date().toISOString();
 
-    // ==============================
-    // 2. FETCH SESSION
-    // ==============================
-    const { data: session, error: sessionFetchError } = await supabase
+    const { data: session, error: sessionFetchError } = await supabaseAdmin
       .from("sessions")
-      .select("id, assignment_id, participant_id, status")
+      .select("id, participant_id, assignment_id")
       .eq("id", sessionId)
       .single();
 
     if (sessionFetchError || !session) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+
+    if (session.participant_id !== authUserId) {
       return NextResponse.json(
-        { error: "Session not found" },
-        { status: 404 }
+        { error: "You can only complete your own session" },
+        { status: 403 }
       );
     }
 
-    // ==============================
-    // 3. UPDATE SESSION
-    // ==============================
-    const { error: sessionUpdateError } = await supabase
+    const safeTranscript = (compactTranscript ?? "").trim();
+
+    const safeDuration =
+      typeof durationSeconds === "number" && durationSeconds >= 0
+        ? Math.round(durationSeconds)
+        : 0;
+
+    const finalTranscriptStatus = transcriptStatus ?? "completed";
+
+    const { error: updateError } = await supabaseAdmin
       .from("sessions")
       .update({
         status: "completed",
         ended_at: endedAt,
         duration_seconds: safeDuration,
         compact_transcript: safeTranscript,
+        video_analysis: videoAnalysis ?? null,
       })
-      .eq("id", sessionId);
+      .eq("id", sessionId)
+      .eq("participant_id", authUserId);
 
-    if (sessionUpdateError) {
-      console.error("Session update error:", sessionUpdateError);
-      return NextResponse.json(
-        { error: "Failed to update session" },
-        { status: 500 }
-      );
+    if (updateError) {
+      console.error("Session update error:", updateError);
+      return NextResponse.json({ error: updateError.message }, { status: 500 });
     }
 
-    // ==============================
-    // 4. UPSERT TRANSCRIPT
-    // ==============================
     const { data: existingTranscript, error: transcriptFetchError } =
-      await supabase
+      await supabaseAdmin
         .from("transcripts")
         .select("id")
         .eq("session_id", sessionId)
         .maybeSingle();
 
     if (transcriptFetchError) {
-      console.error("Transcript fetch error:", transcriptFetchError);
       return NextResponse.json(
-        { error: "Failed to check transcript" },
+        { error: transcriptFetchError.message },
         { status: 500 }
       );
     }
 
     if (existingTranscript) {
-      const { error: transcriptUpdateError } = await supabase
+      await supabaseAdmin
         .from("transcripts")
         .update({
-          status: transcriptStatus ?? "completed",
+          status: finalTranscriptStatus,
           transcript_text: safeTranscript,
           updated_at: endedAt,
         })
         .eq("id", existingTranscript.id);
-
-      if (transcriptUpdateError) {
-        console.error("Transcript update error:", transcriptUpdateError);
-        return NextResponse.json(
-          { error: "Failed to update transcript" },
-          { status: 500 }
-        );
-      }
     } else {
-      const { error: transcriptInsertError } = await supabase
-        .from("transcripts")
-        .insert({
-          session_id: sessionId,
-          status: transcriptStatus ?? "completed",
-          transcript_text: safeTranscript,
-          created_at: endedAt,
-          updated_at: endedAt,
-        });
-
-      if (transcriptInsertError) {
-        console.error("Transcript insert error:", transcriptInsertError);
-        return NextResponse.json(
-          { error: "Failed to create transcript" },
-          { status: 500 }
-        );
-      }
+      await supabaseAdmin.from("transcripts").insert({
+        session_id: sessionId,
+        status: finalTranscriptStatus,
+        transcript_text: safeTranscript,
+        created_at: endedAt,
+        updated_at: endedAt,
+      });
     }
 
-    // ==============================
-    // 5. UPDATE ASSIGNMENT (if exists)
-    // ==============================
     if (session.assignment_id) {
-      const { error: assignmentUpdateError } = await supabase
+      await supabaseAdmin
         .from("session_assignments")
         .update({ status: "completed" })
-        .eq("id", session.assignment_id);
-
-      if (assignmentUpdateError) {
-        console.error(
-          "Assignment update error:",
-          assignmentUpdateError
-        );
-        // ⚠️ not blocking (non-critical)
-      }
+        .eq("id", session.assignment_id)
+        .eq("participant_id", authUserId);
     }
 
-    // ==============================
-    // 6. OFFLINE ANALYSIS IS TRIGGERED BY CLIENT AFTER THIS
-    // ==============================
+    let feedback = null;
 
+    try {
+      feedback = await analyzeSession(sessionId);
+    } catch (analysisError) {
+      console.error("Auto analysis failed:", analysisError);
+    }
 
-    // ==============================
-    // 7. SUCCESS RESPONSE
-    // ==============================
     return NextResponse.json({
       success: true,
       sessionId,
-      message: "Session completed successfully",
+      feedback,
     });
-
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("POST /api/sessions/complete error:", error);
+
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        error: error instanceof Error ? error.message : "Internal server error",
+      },
       { status: 500 }
     );
   }

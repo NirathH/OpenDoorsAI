@@ -9,10 +9,19 @@ export type FeedbackData = {
   strengths?: string[];
   improvements?: string[];
   next_step?: string;
+
+  // 🔥 ADD THIS BLOCK
+  behavior_feedback?: {
+    eye_contact?: string;
+    engagement?: string;
+    facial_expression?: string;
+  } | null;
+
   scores?: {
     clarity?: number;
     confidence?: number;
     relevance?: number;
+    delivery?: number;
   };
 };
 

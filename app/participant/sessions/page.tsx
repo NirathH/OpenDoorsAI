@@ -10,6 +10,7 @@ import {
   Play,
   FileText,
   ChevronDown,
+  Sparkles,
 } from "lucide-react";
 import Navbar from "@/components/participantNavbar";
 import { createSupabaseServer } from "@/lib/supabaseServer";
@@ -35,6 +36,13 @@ type Session = {
   duration_seconds: number | null;
   compact_transcript: string | null;
   created_at: string;
+};
+
+type FeedbackRow = {
+  session_id: string;
+  feedback_json: {
+    summary?: string;
+  } | null;
 };
 
 type PageProps = {
@@ -100,16 +108,30 @@ export default async function ParticipantSessionsPage({
     .eq("status", "completed")
     .order("created_at", { ascending: false });
 
-  if (assignedError) {
-    console.error("Assigned sessions error:", assignedError);
-  }
-
-  if (completedError) {
-    console.error("Completed sessions error:", completedError);
-  }
+  if (assignedError) console.error("Assigned sessions error:", assignedError);
+  if (completedError) console.error("Completed sessions error:", completedError);
 
   const assignedSessions = (assignedData ?? []) as Assignment[];
   const completedSessions = (completedData ?? []) as Session[];
+
+  const completedSessionIds = completedSessions.map((session) => session.id);
+
+  const { data: feedbackRows } =
+    completedSessionIds.length > 0
+      ? await supabase
+          .from("feedback")
+          .select("session_id, feedback_json")
+          .in("session_id", completedSessionIds)
+      : { data: [] };
+
+  const feedbackSummaryBySessionId = new Map<string, string>();
+
+  ((feedbackRows ?? []) as FeedbackRow[]).forEach((row) => {
+    const summary = row.feedback_json?.summary?.trim();
+    if (summary) {
+      feedbackSummaryBySessionId.set(row.session_id, summary);
+    }
+  });
 
   const visibleAssignedSessions = showAllAssigned
     ? assignedSessions
@@ -125,7 +147,9 @@ export default async function ParticipantSessionsPage({
 
       <main className="max-w-350 mx-auto p-6 md:p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-900">My Sessions</h1>
+          <h1 className="text-3xl font-extrabold text-gray-900">
+            My Sessions
+          </h1>
           <p className="mt-2 text-gray-600 font-medium">
             View your assigned practice sessions and your completed sessions.
           </p>
@@ -143,7 +167,8 @@ export default async function ParticipantSessionsPage({
                     Assigned / Not Completed
                   </h2>
                   <p className="text-sm text-gray-500 font-medium">
-                    Showing {visibleAssignedSessions.length} of {assignedSessions.length} sessions
+                    Showing {visibleAssignedSessions.length} of{" "}
+                    {assignedSessions.length} sessions
                   </p>
                 </div>
               </div>
@@ -201,7 +226,9 @@ export default async function ParticipantSessionsPage({
 
                         <div className="flex items-center gap-2 text-sm font-semibold text-brand-primary shrink-0">
                           <span className="group-open:hidden">Expand</span>
-                          <span className="hidden group-open:inline">Minimize</span>
+                          <span className="hidden group-open:inline">
+                            Minimize
+                          </span>
                           <ChevronDown
                             size={18}
                             className="transition-transform duration-200 group-open:rotate-180"
@@ -251,7 +278,8 @@ export default async function ParticipantSessionsPage({
                     Completed Sessions
                   </h2>
                   <p className="text-sm text-gray-500 font-medium">
-                    Showing {visibleCompletedSessions.length} of {completedSessions.length} sessions
+                    Showing {visibleCompletedSessions.length} of{" "}
+                    {completedSessions.length} sessions
                   </p>
                 </div>
               </div>
@@ -278,68 +306,88 @@ export default async function ParticipantSessionsPage({
               <EmptyState text="No completed sessions yet." />
             ) : (
               <div className="space-y-4">
-                {visibleCompletedSessions.map((session) => (
-                  <details
-                    key={session.id}
-                    className="group rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5"
-                  >
-                    <summary className="list-none cursor-pointer">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="min-w-0 flex-1">
-                          <h3 className="text-lg font-bold text-gray-900">
-                            {session.title || "Practice Session"}
-                          </h3>
+                {visibleCompletedSessions.map((session) => {
+                  const feedbackSummary = feedbackSummaryBySessionId.get(
+                    session.id
+                  );
 
-                          <div className="mt-4 flex flex-wrap gap-2">
-                            <InfoPill
-                              icon={<CalendarDays size={14} />}
-                              text={`Completed ${formatDate(
-                                session.ended_at || session.created_at
-                              )}`}
+                  return (
+                    <details
+                      key={session.id}
+                      className="group rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5"
+                    >
+                      <summary className="list-none cursor-pointer">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-lg font-bold text-gray-900">
+                              {session.title || "Practice Session"}
+                            </h3>
+
+                            <div className="mt-4 flex flex-wrap gap-2">
+                              <InfoPill
+                                icon={<CalendarDays size={14} />}
+                                text={`Completed ${formatDate(
+                                  session.ended_at || session.created_at
+                                )}`}
+                              />
+                              <InfoPill
+                                icon={<Clock3 size={14} />}
+                                text={formatDuration(session.duration_seconds)}
+                              />
+                              <StatusPill status={session.status} />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-sm font-semibold text-brand-primary shrink-0">
+                            <span className="group-open:hidden">Expand</span>
+                            <span className="hidden group-open:inline">
+                              Minimize
+                            </span>
+                            <ChevronDown
+                              size={18}
+                              className="transition-transform duration-200 group-open:rotate-180"
                             />
-                            <InfoPill
-                              icon={<Clock3 size={14} />}
-                              text={formatDuration(session.duration_seconds)}
-                            />
-                            <StatusPill status={session.status} />
                           </div>
                         </div>
+                      </summary>
 
-                        <div className="flex items-center gap-2 text-sm font-semibold text-brand-primary shrink-0">
-                          <span className="group-open:hidden">Expand</span>
-                          <span className="hidden group-open:inline">Minimize</span>
-                          <ChevronDown
-                            size={18}
-                            className="transition-transform duration-200 group-open:rotate-180"
-                          />
-                        </div>
-                      </div>
-                    </summary>
-
-                    <div className="mt-4 border-t border-brand-muted pt-4">
-                      {session.compact_transcript && (
-                        <div className="rounded-xl bg-white border border-brand-muted p-3">
-                          <div className="text-xs font-semibold text-gray-500 mb-1">
-                            Saved Summary
+                      <div className="mt-4 border-t border-brand-muted pt-4">
+                        {feedbackSummary ? (
+                          <div className="rounded-2xl bg-white border-2 border-brand-muted p-4">
+                            <div className="flex items-center gap-2 text-xs font-extrabold text-brand-primary mb-2">
+                              <Sparkles size={15} />
+                              Feedback Summary
+                            </div>
+                            <p className="text-sm text-gray-700 font-medium leading-6">
+                              {feedbackSummary}
+                            </p>
                           </div>
-                          <p className="text-sm text-gray-700 font-medium whitespace-pre-line">
-                            {session.compact_transcript}
-                          </p>
-                        </div>
-                      )}
+                        ) : (
+                          <div className="rounded-2xl bg-white border-2 border-brand-muted p-4">
+                            <div className="flex items-center gap-2 text-xs font-extrabold text-gray-500 mb-2">
+                              <Sparkles size={15} />
+                              Feedback Summary
+                            </div>
+                            <p className="text-sm text-gray-500 font-medium leading-6">
+                              Feedback is still being generated or is not
+                              available yet.
+                            </p>
+                          </div>
+                        )}
 
-                      <div className="mt-5">
-                        <Link
-                          href={`/participant/sessions/${session.id}`}
-                          className="inline-flex items-center gap-2 bg-white border-2 border-brand-muted hover:border-brand-primary text-gray-900 font-semibold px-5 py-3 rounded-xl transition-colors"
-                        >
-                          <FileText size={16} />
-                          View Details
-                        </Link>
+                        <div className="mt-5">
+                          <Link
+                            href={`/participant/sessions/${session.id}`}
+                            className="inline-flex items-center gap-2 bg-white border-2 border-brand-muted hover:border-brand-primary text-gray-900 font-semibold px-5 py-3 rounded-xl transition-colors"
+                          >
+                            <FileText size={16} />
+                            View Details
+                          </Link>
+                        </div>
                       </div>
-                    </div>
-                  </details>
-                ))}
+                    </details>
+                  );
+                })}
               </div>
             )}
           </section>
@@ -357,13 +405,7 @@ function EmptyState({ text }: { text: string }) {
   );
 }
 
-function InfoPill({
-  icon,
-  text,
-}: {
-  icon: React.ReactNode;
-  text: string;
-}) {
+function InfoPill({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
     <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-brand-muted bg-white text-gray-700">
       {icon}
