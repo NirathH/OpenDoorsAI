@@ -42,7 +42,10 @@ export default function Navbar({
   const safeInitial = userInitial || cleanName.charAt(0).toUpperCase() || "?";
 
   useEffect(() => {
-    setMobileMenuOpen(false);
+    const handlePathChange = () => {
+      setMobileMenuOpen(false);
+    };
+    handlePathChange();
   }, [pathname]);
 
   useEffect(() => {

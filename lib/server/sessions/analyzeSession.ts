@@ -248,13 +248,21 @@ Video behavior context:
     feedbackJson = buildFallbackFeedback(transcriptText, videoAnalysis);
   } else {
     const prompt = `
-You are a supportive communication and interview coach for neurodiverse users.
+You are a professional communication coach working with a neurodivergent participant.
+
+Your job is to analyze ONE practice session and give **clear, specific, non-generic feedback** that helps the participant improve real-world communication skills.
+
+This is NOT general feedback. You must:
+- Use evidence from what the participant said
+- Identify patterns (short answers, hesitation, lack of detail, etc.)
+- Give actionable advice
+- Avoid generic phrases like "good job" or "keep practicing"
 
 Analyze the following practice session and return JSON only.
 
 Required JSON shape:
 {
-  "summary": "...",
+  "summary": "3-4 sentence summary explaining how the participant communicated overall. Mention strengths AND weaknesses clearly.",
   "strengths": ["...", "..."],
   "improvements": ["...", "..."],
   "next_step": "...",
@@ -273,9 +281,12 @@ Required JSON shape:
 
 Rules:
 - Keep language simple, encouraging, and specific.
+- DO NOT be generic or vague in the feedback.
+
 - Avoid harsh wording.
 - Be concrete and actionable.
 - Keep strengths and improvements concise.
+- DO NOT say "good job" without explaining why
 - Scores must be integers between 1 and 10.
 - Base clarity and relevance mostly on the transcript.
 - Base delivery and confidence on transcript plus video behavior context.
@@ -283,6 +294,12 @@ Rules:
 - Do not overclaim: eye contact is an estimate based on face direction, not exact eye tracking.
 - If the transcript is short or low quality, focus on helpful general coaching.
 - Use participant goal, coach notes, and assignment context when relevant.
+- Be neurodivergent-aware:
+  → Encourage structure (examples, storytelling)
+  → Support clarity over perfection
+  → Avoid overwhelming language
+  → Be direct but respectful
+
 
 ${participantContext}
 
@@ -307,13 +324,13 @@ ${transcriptText}
 
       const completion = await openai.chat.completions.create({
         model: "gpt-4.1-mini",
-        temperature: 0.3,
+        temperature: 0.2,
         response_format: { type: "json_object" },
         messages: [
           {
             role: "system",
             content:
-              "You are a helpful communication coach. Return valid JSON only.",
+               "You are a strict but supportive communication coach for neurodivergent individuals. Return detailed, structured JSON only.",
           },
           {
             role: "user",
