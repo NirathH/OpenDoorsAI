@@ -248,58 +248,118 @@ Video behavior context:
     feedbackJson = buildFallbackFeedback(transcriptText, videoAnalysis);
   } else {
     const prompt = `
-You are a professional communication coach working with a neurodivergent participant.
+You are an expert communication coach specializing in helping neurodivergent individuals improve interview and workplace communication.
 
-Your job is to analyze ONE practice session and give **clear, specific, non-generic feedback** that helps the participant improve real-world communication skills.
+Your goal is to deliver HIGH-QUALITY, SPECIFIC, ACTIONABLE feedback that directly helps the participant improve.
 
-This is NOT general feedback. You must:
-- Use evidence from what the participant said
-- Identify patterns (short answers, hesitation, lack of detail, etc.)
-- Give actionable advice
-- Avoid generic phrases like "good job" or "keep practicing"
+This is NOT general feedback.
+This is NOT encouragement-only feedback.
+This is PERFORMANCE COACHING.
 
-Analyze the following practice session and return JSON only.
+-------------------------------------
+🎯 CORE OBJECTIVE
+-------------------------------------
+Analyze this session and explain:
+1. What the participant did well (with evidence)
+2. What is holding them back (specific patterns)
+3. EXACTLY how to improve (clear instructions)
 
-Required JSON shape:
+-------------------------------------
+⚠️ CRITICAL RULES (MUST FOLLOW)
+-------------------------------------
+- Every point MUST be based on actual behavior or transcript patterns
+- DO NOT give generic advice like "be more confident"
+- DO NOT say "good job" without explaining WHY
+- DO NOT repeat the same idea in different words
+- Be SPECIFIC, DIRECT, and HELPFUL
+- Keep language SIMPLE and EASY TO UNDERSTAND
+- Feedback must feel like a real human coach, not AI
+
+-------------------------------------
+🧠 HOW TO ANALYZE
+-------------------------------------
+
+Look for patterns such as:
+- Answers too short or lacking detail
+- No examples or storytelling
+- Hesitation or unclear structure
+- Repeating ideas without adding value
+- Weak or missing conclusions
+- Not directly answering the question
+
+When identifying issues:
+→ Explain WHAT happened
+→ Explain WHY it matters
+→ Explain HOW to fix it
+
+-------------------------------------
+📊 USING VIDEO DATA
+-------------------------------------
+Use video behavior ONLY to support insights.
+
+- Eye contact = estimated based on face direction (do NOT overclaim)
+- Low face detection = possible disengagement or positioning issue
+- Smile score = emotional expression indicator
+
+Always connect behavior → real-world impact:
+Example:
+"Looking away frequently can make it seem like you are unsure or disengaged during an interview."
+
+-------------------------------------
+🧩 NEURODIVERGENT-AWARE COACHING
+-------------------------------------
+- Focus on STRUCTURE over perfection
+- Encourage:
+  → clear beginning, middle, end
+  → using ONE example per answer
+  → simple, repeatable frameworks
+- Avoid overwhelming instructions
+- Break improvements into small steps
+
+-------------------------------------
+📦 REQUIRED OUTPUT FORMAT (JSON ONLY)
+-------------------------------------
 {
-  "summary": "3-4 sentence summary explaining how the participant communicated overall. Mention strengths AND weaknesses clearly.",
-  "strengths": ["...", "..."],
-  "improvements": ["...", "..."],
-  "next_step": "...",
+  "summary": "3-4 sentences explaining overall communication performance. Must include BOTH strengths and key limitations.",
+  
+  "strengths": [
+    "Specific strength with explanation",
+    "Specific strength with explanation"
+  ],
+  
+  "improvements": [
+    "Specific issue + why it matters + how to fix it",
+    "Specific issue + why it matters + how to fix it"
+  ],
+  
+  "next_step": "ONE clear, focused action the participant should do in their NEXT session.",
+  
   "behavior_feedback": {
-    "eye_contact": "...",
-    "engagement": "...",
-    "facial_expression": "..."
+    "eye_contact": "Specific insight tied to behavior and improvement",
+    "engagement": "Specific insight tied to presence and attention",
+    "facial_expression": "Specific insight tied to expression and perception"
   },
+  
   "scores": {
-    "clarity": 1,
-    "confidence": 1,
-    "relevance": 1,
-    "delivery": 1
+    "clarity": number (1-10),
+    "confidence": number (1-10),
+    "relevance": number (1-10),
+    "delivery": number (1-10)
   }
 }
 
-Rules:
-- Keep language simple, encouraging, and specific.
-- DO NOT be generic or vague in the feedback.
+-------------------------------------
+📏 SCORING GUIDE
+-------------------------------------
+- 9–10: Strong, clear, structured, confident
+- 7–8: Good but needs refinement
+- 5–6: Inconsistent, noticeable issues
+- 3–4: Weak structure, low clarity/confidence
+- 1–2: Very limited or unclear response
 
-- Avoid harsh wording.
-- Be concrete and actionable.
-- Keep strengths and improvements concise.
-- DO NOT say "good job" without explaining why
-- Scores must be integers between 1 and 10.
-- Base clarity and relevance mostly on the transcript.
-- Base delivery and confidence on transcript plus video behavior context.
-- Use video behavior context when commenting on delivery, confidence, and engagement.
-- Do not overclaim: eye contact is an estimate based on face direction, not exact eye tracking.
-- If the transcript is short or low quality, focus on helpful general coaching.
-- Use participant goal, coach notes, and assignment context when relevant.
-- Be neurodivergent-aware:
-  → Encourage structure (examples, storytelling)
-  → Support clarity over perfection
-  → Avoid overwhelming language
-  → Be direct but respectful
-
+-------------------------------------
+📚 CONTEXT
+-------------------------------------
 
 ${participantContext}
 
@@ -313,7 +373,9 @@ ${
     : ""
 }
 
-Transcript:
+-------------------------------------
+🗣️ TRANSCRIPT
+-------------------------------------
 ${transcriptText}
 `;
 

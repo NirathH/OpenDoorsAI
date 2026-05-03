@@ -300,44 +300,6 @@ export default function ParticipantProgressDashboard({
         </div>
       </section>
 
-      <section className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-        <StatCard
-          title="Assigned"
-          value={progress.totalAssignments}
-          subtitle="Goals assigned"
-          icon={<ClipboardList size={20} />}
-          accent={COLORS.sky}
-        />
-        <StatCard
-          title="Completed"
-          value={progress.completedAssignments}
-          subtitle="Goals finished"
-          icon={<CheckCircle2 size={20} />}
-          accent={COLORS.teal}
-        />
-        <StatCard
-          title="Pending"
-          value={progress.pendingAssignments}
-          subtitle="Still to complete"
-          icon={<Clock3 size={20} />}
-          accent={COLORS.amber}
-        />
-        <StatCard
-          title="Sessions"
-          value={progress.totalSessions}
-          subtitle="Practice sessions"
-          icon={<Activity size={20} />}
-          accent={COLORS.sky}
-        />
-        <StatCard
-          title="Avg Time"
-          value={progress.averageSessionDurationLabel}
-          subtitle="Per session"
-          icon={<TimerReset size={20} />}
-          accent={COLORS.teal}
-        />
-      </section>
-
       <AccordionCard
         icon={<TrendingUp size={20} />}
         title="Sessions Over Time"

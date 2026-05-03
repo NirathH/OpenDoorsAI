@@ -100,11 +100,6 @@ export default async function ProfilePage({ searchParams }: PageProps) {
           <div className="grid grid-cols-1 gap-4 mt-4">
             <DetailCard
               icon={<StickyNote size={18} />}
-              label="Support Notes"
-              value={profile.participant_condition || "Not added yet"}
-            />
-            <DetailCard
-              icon={<StickyNote size={18} />}
               label="Coach Notes"
               value={profile.coach_notes || "Not added yet"}
             />
