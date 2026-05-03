@@ -13,8 +13,7 @@ const NAV_ITEMS = [
   { label: "Dashboard", href: "/participant/dashboard" },
   { label: "Sessions", href: "/participant/sessions" },
   { label: "Progress", href: "/participant/progress" },
-  { label: "Skill Modules", href: "/participant/modules" },
-  { label: "Feedback", href: "/participant/feedback" },
+  { label: "My Profile", href: "/participant/profile" },
 ];
 
 function cn(...classes: Array<string | false | undefined | null>) {
