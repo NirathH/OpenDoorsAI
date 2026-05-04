@@ -12,7 +12,7 @@ export default function GoalCard({ icon: Icon, title }: Props) {
                 <div className="bg-brand-light p-2 rounded-xl text-brand-primary">
                     <Icon size={24} />
                 </div>
-                <span className="font-semibold text-sm text-gray-800">{title}</span>
+                <span className="font-semibold text-base text-gray-800">{title}</span>
             </div>
             <ChevronRight size={20} className="text-gray-400" />
         </div>

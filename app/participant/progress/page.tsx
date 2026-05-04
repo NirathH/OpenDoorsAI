@@ -21,12 +21,12 @@ export default async function ParticipantProgressPage() {
           <div className="rounded-[2rem] border-2 border-brand-muted bg-white p-6 md:p-8 shadow-sm">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-light border border-brand-muted text-brand-primary text-sm font-bold mb-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-light border border-brand-muted text-brand-primary text-base font-bold mb-4">
                   <TrendingUp size={16} />
                   Progress Overview
                 </div>
 
-                <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">
+                <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900">
                   My Progress
                 </h1>
 
@@ -37,10 +37,10 @@ export default async function ParticipantProgressPage() {
               </div>
 
               <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 px-5 py-4 min-w-[180px]">
-                <div className="text-xs font-bold text-gray-500 uppercase">
+                <div className="text-sm font-bold text-gray-500 uppercase">
                   Completed Sessions
                 </div>
-                <div className="text-2xl font-extrabold text-gray-900 mt-1">
+                <div className="text-3xl font-extrabold text-gray-900 mt-1">
                   {progress.completedSessions || 0}
                 </div>
               </div>

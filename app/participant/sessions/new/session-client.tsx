@@ -491,7 +491,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
               <Sparkles className="text-brand-primary" size={34} />
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900">
               Analyzing your session
             </h1>
 
@@ -541,7 +541,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
                         {step.title}
                       </div>
 
-                      <div className="text-sm text-gray-500 font-medium mt-0.5">
+                      <div className="text-base text-gray-500 font-medium mt-0.5">
                         {step.description}
                       </div>
                     </div>
@@ -580,12 +580,12 @@ function SessionContent({ accessToken }: { accessToken: string }) {
               />
             </div>
 
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border border-green-200 text-green-700 text-sm font-semibold mb-5">
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border border-green-200 text-green-700 text-base font-semibold mb-5">
               <CheckCircle2 size={16} />
               Session Completed
             </div>
 
-            <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900">
               {completionContent.title}
             </h1>
 
@@ -627,22 +627,22 @@ function SessionContent({ accessToken }: { accessToken: string }) {
               className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-brand-muted bg-white hover:border-brand-primary transition-colors"
             >
               <ChevronLeft size={18} className="text-brand-primary" />
-              <span className="text-sm font-semibold text-gray-800">
+              <span className="text-base font-semibold text-gray-800">
                 Sessions
               </span>
             </Link>
 
-            <div className="text-gray-900 font-extrabold text-lg">
+            <div className="text-gray-900 font-extrabold text-xl">
               Practice Session
             </div>
 
-            <div className="hidden md:block text-sm text-gray-500 font-medium">
+            <div className="hidden md:block text-base text-gray-500 font-medium">
               Conversation with AI Reviewer
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-brand-muted bg-white text-gray-700">
+            <span className="px-3 py-1.5 rounded-full text-sm font-semibold border-2 border-brand-muted bg-white text-gray-700">
               {isSavingSession
                 ? "Saving"
                 : isRecording
@@ -650,7 +650,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
                 : status.value}
             </span>
 
-            <span className="px-3 py-1.5 rounded-full text-xs font-extrabold border-2 border-brand-muted bg-white text-gray-900">
+            <span className="px-3 py-1.5 rounded-full text-sm font-extrabold border-2 border-brand-muted bg-white text-gray-900">
               {formatTime(seconds)}
             </span>
           </div>
@@ -662,7 +662,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
           <div className="bg-white rounded-4xl border-2 border-brand-muted shadow-sm p-6 md:p-8">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-extrabold text-gray-900">
+                <h1 className="text-3xl font-extrabold text-gray-900">
                   Camera Preview
                 </h1>
 
@@ -685,7 +685,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
             </div>
 
             {error && (
-              <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700 text-sm font-medium">
+              <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700 text-base font-medium">
                 {error}
               </div>
             )}
@@ -700,12 +700,12 @@ function SessionContent({ accessToken }: { accessToken: string }) {
               />
 
               <div className="absolute inset-0 pointer-events-none">
-                <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-white/90 border border-brand-muted text-xs font-semibold text-gray-800">
+                <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-white/90 border border-brand-muted text-sm font-semibold text-gray-800">
                   You
                 </div>
 
                 {isRecording && (
-                  <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-white/90 border border-brand-muted text-xs font-extrabold text-red-600 inline-flex items-center gap-2">
+                  <div className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-white/90 border border-brand-muted text-sm font-extrabold text-red-600 inline-flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full animate-pulse bg-red-500" />
                     LIVE
                   </div>
@@ -765,7 +765,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
         </section>
 
         <aside className="bg-white rounded-4xl border-2 border-brand-muted shadow-sm p-6 md:p-8 h-fit">
-          <h2 className="text-xl font-extrabold text-gray-900">
+          <h2 className="text-2xl font-extrabold text-gray-900">
             Session Goal
           </h2>
 
@@ -774,7 +774,7 @@ function SessionContent({ accessToken }: { accessToken: string }) {
           </p>
 
           <div className="mt-5 rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5">
-            <div className="text-xs font-semibold text-gray-600 mb-1">
+            <div className="text-sm font-semibold text-gray-600 mb-1">
               Prompt
             </div>
 
@@ -784,20 +784,20 @@ function SessionContent({ accessToken }: { accessToken: string }) {
                 Crafting scenario...
               </div>
             ) : (
-              <div className="text-gray-900 font-extrabold text-[15px] leading-relaxed">
+              <div className="text-gray-900 font-extrabold text-[17px] leading-relaxed">
                 {dynamicScenario}
               </div>
             )}
           </div>
 
           <div className="mt-6">
-            <div className="text-sm font-extrabold text-gray-900">
+            <div className="text-base font-extrabold text-gray-900">
               Quick tips
             </div>
 
             <div className="mt-3 space-y-2">
               {isGeneratingPrompt ? (
-                <div className="text-gray-500 text-sm font-medium py-1">
+                <div className="text-gray-500 text-base font-medium py-1">
                   Loading tips...
                 </div>
               ) : (
@@ -807,11 +807,11 @@ function SessionContent({ accessToken }: { accessToken: string }) {
           </div>
 
           <div className="mt-6">
-            <div className="text-sm font-extrabold text-gray-900">
+            <div className="text-base font-extrabold text-gray-900">
               How to use AI
             </div>
 
-            <ul className="mt-3 space-y-2 text-sm text-gray-600 font-medium list-disc ml-5">
+            <ul className="mt-3 space-y-2 text-base text-gray-600 font-medium list-disc ml-5">
               <li>Click Start Conversation to connect to the AI</li>
               <li>Wait for it to ask the question</li>
               <li>Answer clearly into your microphone</li>
@@ -854,7 +854,7 @@ function ToggleBtn({
         {active ? iconOn : iconOff}
       </span>
 
-      <span className="hidden md:block text-sm font-semibold">{label}</span>
+      <span className="hidden md:block text-base font-semibold">{label}</span>
     </button>
   );
 }
@@ -862,8 +862,8 @@ function ToggleBtn({
 function VideoStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-4">
-      <div className="text-xs font-semibold text-gray-500">{label}</div>
-      <div className="mt-1 text-lg font-extrabold text-gray-900">{value}</div>
+      <div className="text-sm font-semibold text-gray-500">{label}</div>
+      <div className="mt-1 text-xl font-extrabold text-gray-900">{value}</div>
     </div>
   );
 }
@@ -871,8 +871,8 @@ function VideoStat({ label, value }: { label: string; value: string }) {
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-4">
-      <div className="text-xs font-semibold text-gray-500">{label}</div>
-      <div className="mt-1 text-base md:text-lg font-extrabold text-gray-900">
+      <div className="text-sm font-semibold text-gray-500">{label}</div>
+      <div className="mt-1 text-lg md:text-xl font-extrabold text-gray-900">
         {value}
       </div>
     </div>
@@ -881,7 +881,7 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 
 function Tip({ text }: { text: string }) {
   return (
-    <div className="rounded-2xl border-2 border-brand-muted bg-white p-4 text-sm text-gray-700 font-medium">
+    <div className="rounded-2xl border-2 border-brand-muted bg-white p-4 text-base text-gray-700 font-medium">
       {text}
     </div>
   );

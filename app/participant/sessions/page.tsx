@@ -147,7 +147,7 @@ export default async function ParticipantSessionsPage({
 
       <main className="max-w-350 mx-auto p-6 md:p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-gray-900">
+          <h1 className="text-4xl font-extrabold text-gray-900">
             My Sessions
           </h1>
           <p className="mt-2 text-gray-600 font-medium">
@@ -163,10 +163,10 @@ export default async function ParticipantSessionsPage({
                   <ClipboardList size={22} className="text-brand-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-extrabold text-gray-900">
+                  <h2 className="text-2xl font-extrabold text-gray-900">
                     Assigned / Not Completed
                   </h2>
-                  <p className="text-sm text-gray-500 font-medium">
+                  <p className="text-base text-gray-500 font-medium">
                     Showing {visibleAssignedSessions.length} of{" "}
                     {assignedSessions.length} sessions
                   </p>
@@ -180,7 +180,7 @@ export default async function ParticipantSessionsPage({
                       ? "/participant/sessions"
                       : "/participant/sessions?showAllAssigned=true"
                   }
-                  className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                  className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-base font-semibold transition ${
                     showAllAssigned
                       ? "border-2 border-brand-muted bg-white text-gray-700 hover:border-brand-primary hover:text-brand-primary"
                       : "bg-brand-primary text-white hover:opacity-90"
@@ -203,7 +203,7 @@ export default async function ParticipantSessionsPage({
                     <summary className="list-none cursor-pointer">
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
-                          <h3 className="text-lg font-bold text-gray-900">
+                          <h3 className="text-xl font-bold text-gray-900">
                             {assignment.title}
                           </h3>
 
@@ -224,7 +224,7 @@ export default async function ParticipantSessionsPage({
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 text-sm font-semibold text-brand-primary shrink-0">
+                        <div className="flex items-center gap-2 text-base font-semibold text-brand-primary shrink-0">
                           <span className="group-open:hidden">Expand</span>
                           <span className="hidden group-open:inline">
                             Minimize
@@ -239,14 +239,14 @@ export default async function ParticipantSessionsPage({
 
                     <div className="mt-4 border-t border-brand-muted pt-4">
                       {assignment.goal && (
-                        <p className="mt-1 text-sm text-gray-700">
+                        <p className="mt-1 text-base text-gray-700">
                           <span className="font-semibold">Goal:</span>{" "}
                           {assignment.goal}
                         </p>
                       )}
 
                       {assignment.instructions && (
-                        <p className="mt-2 text-sm text-gray-700 font-medium whitespace-pre-line">
+                        <p className="mt-2 text-base text-gray-700 font-medium whitespace-pre-line">
                           {assignment.instructions}
                         </p>
                       )}
@@ -274,10 +274,10 @@ export default async function ParticipantSessionsPage({
                   <CheckCircle2 size={22} className="text-brand-primary" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-extrabold text-gray-900">
+                  <h2 className="text-2xl font-extrabold text-gray-900">
                     Completed Sessions
                   </h2>
-                  <p className="text-sm text-gray-500 font-medium">
+                  <p className="text-base text-gray-500 font-medium">
                     Showing {visibleCompletedSessions.length} of{" "}
                     {completedSessions.length} sessions
                   </p>
@@ -291,7 +291,7 @@ export default async function ParticipantSessionsPage({
                       ? "/participant/sessions"
                       : "/participant/sessions?showAllCompleted=true"
                   }
-                  className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                  className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-base font-semibold transition ${
                     showAllCompleted
                       ? "border-2 border-brand-muted bg-white text-gray-700 hover:border-brand-primary hover:text-brand-primary"
                       : "bg-brand-primary text-white hover:opacity-90"
@@ -319,7 +319,7 @@ export default async function ParticipantSessionsPage({
                       <summary className="list-none cursor-pointer">
                         <div className="flex items-start justify-between gap-4">
                           <div className="min-w-0 flex-1">
-                            <h3 className="text-lg font-bold text-gray-900">
+                            <h3 className="text-xl font-bold text-gray-900">
                               {session.title || "Practice Session"}
                             </h3>
 
@@ -338,7 +338,7 @@ export default async function ParticipantSessionsPage({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 text-sm font-semibold text-brand-primary shrink-0">
+                          <div className="flex items-center gap-2 text-base font-semibold text-brand-primary shrink-0">
                             <span className="group-open:hidden">Expand</span>
                             <span className="hidden group-open:inline">
                               Minimize
@@ -354,21 +354,21 @@ export default async function ParticipantSessionsPage({
                       <div className="mt-4 border-t border-brand-muted pt-4">
                         {feedbackSummary ? (
                           <div className="rounded-2xl bg-white border-2 border-brand-muted p-4">
-                            <div className="flex items-center gap-2 text-xs font-extrabold text-brand-primary mb-2">
+                            <div className="flex items-center gap-2 text-sm font-extrabold text-brand-primary mb-2">
                               <Sparkles size={15} />
                               Feedback Summary
                             </div>
-                            <p className="text-sm text-gray-700 font-medium leading-6">
+                            <p className="text-base text-gray-700 font-medium leading-6">
                               {feedbackSummary}
                             </p>
                           </div>
                         ) : (
                           <div className="rounded-2xl bg-white border-2 border-brand-muted p-4">
-                            <div className="flex items-center gap-2 text-xs font-extrabold text-gray-500 mb-2">
+                            <div className="flex items-center gap-2 text-sm font-extrabold text-gray-500 mb-2">
                               <Sparkles size={15} />
                               Feedback Summary
                             </div>
-                            <p className="text-sm text-gray-500 font-medium leading-6">
+                            <p className="text-base text-gray-500 font-medium leading-6">
                               Feedback is still being generated or is not
                               available yet.
                             </p>
@@ -407,7 +407,7 @@ function EmptyState({ text }: { text: string }) {
 
 function InfoPill({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (
-    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-brand-muted bg-white text-gray-700">
+    <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-semibold border-2 border-brand-muted bg-white text-gray-700">
       {icon}
       {text}
     </span>
@@ -424,7 +424,7 @@ function StatusPill({ status }: { status: string }) {
 
   return (
     <span
-      className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${styles}`}
+      className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold border ${styles}`}
     >
       {status.replaceAll("_", " ")}
     </span>

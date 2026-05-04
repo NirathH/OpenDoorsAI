@@ -107,12 +107,12 @@ export default async function ParticipantSessionDetailsPage({
         <section className="rounded-[2rem] border-2 border-brand-muted bg-white p-6 md:p-8 shadow-sm mb-8">
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-5">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-green-700 text-sm font-bold mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 border border-green-200 text-green-700 text-base font-bold mb-4">
                 <CheckCircle2 size={16} />
                 Session Completed
               </div>
 
-              <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 leading-tight">
+              <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight">
                 {session.title || "Session Feedback"}
               </h1>
 
@@ -123,10 +123,10 @@ export default async function ParticipantSessionDetailsPage({
             </div>
 
             <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-4 min-w-[180px]">
-              <div className="text-xs font-bold text-gray-500 uppercase">
+              <div className="text-sm font-bold text-gray-500 uppercase">
                 Duration
               </div>
-              <div className="text-2xl font-extrabold text-gray-900 mt-1">
+              <div className="text-3xl font-extrabold text-gray-900 mt-1">
                 {formatDuration(session.duration_seconds)}
               </div>
             </div>
@@ -152,7 +152,7 @@ export default async function ParticipantSessionDetailsPage({
                   subtitle="A quick overview of your session"
                   tone="brand"
                 >
-                  <p className="text-gray-800 font-medium leading-8 text-base">
+                  <p className="text-gray-800 font-medium leading-8 text-lg">
                     {feedbackData.summary}
                   </p>
                 </AccordionCard>
@@ -240,7 +240,7 @@ export default async function ParticipantSessionDetailsPage({
                     key={index}
                     className="rounded-3xl border-2 border-brand-muted bg-brand-light/40 p-5 md:p-6"
                   >
-                    <div className="flex items-center gap-2 text-sm font-extrabold text-brand-primary mb-2">
+                    <div className="flex items-center gap-2 text-base font-extrabold text-brand-primary mb-2">
                       Question {index + 1}
                     </div>
 
@@ -249,7 +249,7 @@ export default async function ParticipantSessionDetailsPage({
                     </p>
 
                     <div className="rounded-2xl bg-white border-2 border-brand-muted p-4">
-                      <div className="text-xs font-bold text-gray-500 uppercase mb-2">
+                      <div className="text-sm font-bold text-gray-500 uppercase mb-2">
                         Your Response
                       </div>
                       <p className="text-gray-800 font-medium leading-7">
@@ -259,7 +259,7 @@ export default async function ParticipantSessionDetailsPage({
 
                     {block.emotion && (
                       <div className="mt-4 rounded-2xl bg-white border-2 border-brand-muted p-4">
-                        <div className="text-xs font-bold text-gray-500 uppercase mb-2">
+                        <div className="text-sm font-bold text-gray-500 uppercase mb-2">
                           Expression
                         </div>
                         <p className="text-gray-700 font-medium leading-7">
@@ -349,19 +349,19 @@ function AccordionCard({
           </div>
 
           <div>
-            <h2 className="text-lg md:text-xl font-extrabold text-gray-900">
+            <h2 className="text-xl md:text-2xl font-extrabold text-gray-900">
               {title}
             </h2>
-            <p className="text-sm text-gray-500 font-medium mt-1">
+            <p className="text-base text-gray-500 font-medium mt-1">
               {subtitle}
             </p>
           </div>
         </div>
 
-        <span className="text-sm font-bold text-gray-500 group-open:hidden">
+        <span className="text-base font-bold text-gray-500 group-open:hidden">
           Open
         </span>
-        <span className="text-sm font-bold text-gray-500 hidden group-open:inline">
+        <span className="text-base font-bold text-gray-500 hidden group-open:inline">
           Close
         </span>
       </summary>
@@ -385,7 +385,7 @@ function InfoCard({
       <div className="h-10 w-10 rounded-2xl bg-brand-light flex items-center justify-center text-brand-primary mb-4">
         {icon}
       </div>
-      <div className="text-xs text-gray-500 font-bold uppercase mb-1">
+      <div className="text-sm text-gray-500 font-bold uppercase mb-1">
         {label}
       </div>
       <div className="text-gray-900 font-extrabold break-words">{value}</div>
@@ -407,15 +407,15 @@ function ScoreCard({
     <div className="rounded-3xl border-2 border-brand-muted bg-white p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-extrabold text-gray-900">{label}</div>
-          <div className="text-xs font-bold text-gray-500 mt-1">
+          <div className="text-base font-extrabold text-gray-900">{label}</div>
+          <div className="text-sm font-bold text-gray-500 mt-1">
             {getScoreTone(safeScore)}
           </div>
         </div>
 
-        <div className="text-2xl font-extrabold text-gray-900">
+        <div className="text-3xl font-extrabold text-gray-900">
           {safeScore ?? "—"}
-          <span className="text-sm text-gray-500">/10</span>
+          <span className="text-base text-gray-500">/10</span>
         </div>
       </div>
 
@@ -454,7 +454,7 @@ function NumberedList({
               (tone === "green" ? "text-green-700" : "text-brand-primary")
             }
           >
-            <span className="text-xs font-extrabold">{i + 1}</span>
+            <span className="text-sm font-extrabold">{i + 1}</span>
           </div>
 
           <p className="text-gray-800 font-medium leading-7">{item}</p>
@@ -477,7 +477,7 @@ function BehaviorCard({
     <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-5">
       <div className="text-brand-primary mb-3">{icon}</div>
       <div className="font-extrabold text-gray-900 mb-2">{title}</div>
-      <p className="text-sm text-gray-700 font-medium leading-6">
+      <p className="text-base text-gray-700 font-medium leading-6">
         {text || "No data available yet."}
       </p>
     </div>

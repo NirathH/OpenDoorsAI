@@ -98,7 +98,7 @@ export default function Navbar({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "px-3 py-2 rounded-xl text-sm font-semibold transition-colors",
+                  "px-3 py-2 rounded-xl text-base font-semibold transition-colors",
                   active
                     ? "bg-white border-2 border-brand-muted text-brand-primary shadow-sm"
                     : "text-gray-600 hover:text-gray-900 hover:bg-white/70"
@@ -111,7 +111,7 @@ export default function Navbar({
         </nav>
 
         <div className="flex items-center gap-2 md:gap-3">
-          <span className="hidden md:inline-flex px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-brand-muted bg-white text-gray-700">
+          <span className="hidden md:inline-flex px-3 py-1.5 rounded-full text-sm font-semibold border-2 border-brand-muted bg-white text-gray-700">
             {userRole}
           </span>
 
@@ -130,7 +130,7 @@ export default function Navbar({
                 <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border-2 border-brand-muted bg-white shadow-lg p-2 z-50">
 
                   {/* Navigation */}
-                  <div className="px-3 py-2 text-xs font-semibold text-gray-500">
+                  <div className="px-3 py-2 text-sm font-semibold text-gray-500">
                     Navigation
                   </div>
 
@@ -145,7 +145,7 @@ export default function Navbar({
                           key={item.href}
                           href={item.href}
                           className={cn(
-                            "px-3 py-2 rounded-xl text-sm font-semibold transition-colors",
+                            "px-3 py-2 rounded-xl text-base font-semibold transition-colors",
                             active
                               ? "bg-brand-secondary text-white"
                               : "text-gray-700 hover:bg-brand-light"
@@ -160,15 +160,15 @@ export default function Navbar({
                   {/* 👇 Profile section at bottom */}
                   <div className="mt-3 pt-3 border-t border-brand-muted">
                     <div className="flex items-center gap-3 px-2">
-                      <div className="h-10 w-10 rounded-full border-2 border-brand-muted bg-white flex items-center justify-center text-sm font-bold text-brand-primary shrink-0">
+                      <div className="h-10 w-10 rounded-full border-2 border-brand-muted bg-white flex items-center justify-center text-base font-bold text-brand-primary shrink-0">
                         {safeInitial}
                       </div>
 
                       <div className="min-w-0">
-                        <div className="text-sm font-bold text-gray-900 truncate">
+                        <div className="text-base font-bold text-gray-900 truncate">
                           {cleanName || "Participant"}
                         </div>
-                        <div className="text-xs text-gray-500 font-medium">
+                        <div className="text-sm text-gray-500 font-medium">
                           {userRole}
                         </div>
                       </div>
@@ -176,7 +176,7 @@ export default function Navbar({
 
                     <Link
                       href="/login"
-                      className="mt-3 inline-flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 transition-colors"
+                      className="mt-3 inline-flex w-full items-center gap-2 rounded-xl px-3 py-2 text-base font-semibold text-red-600 hover:bg-red-50 transition-colors"
                     >
                       <LogOut size={16} />
                       Logout

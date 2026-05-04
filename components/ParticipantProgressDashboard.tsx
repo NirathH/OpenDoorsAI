@@ -163,20 +163,20 @@ export default function ParticipantProgressDashboard({
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="flex items-center gap-4 min-w-0">
             <div
-              className="h-16 w-16 rounded-3xl flex items-center justify-center text-white font-extrabold text-2xl shrink-0"
+              className="h-16 w-16 rounded-3xl flex items-center justify-center text-white font-extrabold text-3xl shrink-0"
               style={{ background: COLORS.teal }}
             >
               {displayName.charAt(0).toUpperCase()}
             </div>
 
             <div className="min-w-0">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">
+              <p className="text-sm font-bold text-gray-400 uppercase tracking-wide">
                 Participant
               </p>
-              <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 truncate">
+              <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 truncate">
                 {displayName}
               </h2>
-              <p className="text-sm text-gray-500 font-medium mt-1 truncate">
+              <p className="text-base text-gray-500 font-medium mt-1 truncate">
                 {participantEmail}
               </p>
             </div>
@@ -187,7 +187,7 @@ export default function ParticipantProgressDashboard({
               <TrendingUp size={18} />
               {progress.completionRate}% goal completion
             </div>
-            <p className="text-xs text-gray-500 font-semibold mt-1">
+            <p className="text-sm text-gray-500 font-semibold mt-1">
               Based on assigned practice goals
             </p>
           </div>
@@ -214,10 +214,10 @@ export default function ParticipantProgressDashboard({
           </div>
 
           <div>
-            <h2 className="text-xl font-extrabold text-gray-900">
+            <h2 className="text-2xl font-extrabold text-gray-900">
               Weekly Coach Feedback
             </h2>
-            <p className="text-sm text-gray-500 font-medium mt-1">
+            <p className="text-base text-gray-500 font-medium mt-1">
               Simple weekly progress, next focus, and coaching notes.
             </p>
           </div>
@@ -285,7 +285,7 @@ export default function ParticipantProgressDashboard({
                     {latestWeeklyJson.recommended_practice.map((item, index) => (
                       <div
                         key={index}
-                        className="rounded-2xl border-2 border-brand-muted bg-brand-light/30 p-4 text-sm text-gray-800 font-medium leading-6"
+                        className="rounded-2xl border-2 border-brand-muted bg-brand-light/30 p-4 text-base text-gray-800 font-medium leading-6"
                       >
                         {item}
                       </div>
@@ -347,11 +347,11 @@ export default function ParticipantProgressDashboard({
                       <p className="font-extrabold text-gray-900">
                         {session.title || "Practice Session"}
                       </p>
-                      <p className="text-xs text-gray-500 font-medium mt-1">
+                      <p className="text-sm text-gray-500 font-medium mt-1">
                         {formatShortDate(session.ended_at || session.created_at)}
                       </p>
                     </div>
-                    <span className="rounded-full bg-white border-2 border-brand-muted px-3 py-1 text-xs font-bold text-gray-700">
+                    <span className="rounded-full bg-white border-2 border-brand-muted px-3 py-1 text-sm font-bold text-gray-700">
                       {formatDuration(session.duration_seconds)}
                     </span>
                   </div>
@@ -383,7 +383,7 @@ export default function ParticipantProgressDashboard({
                       <p className="font-extrabold text-gray-900">
                         {goal.title || "Untitled Goal"}
                       </p>
-                      <p className="text-xs text-gray-500 font-medium mt-1">
+                      <p className="text-sm text-gray-500 font-medium mt-1">
                         Due {formatShortDate(goal.due_at)}
                       </p>
                     </div>
@@ -409,10 +409,10 @@ export default function ParticipantProgressDashboard({
                 key={week.id}
                 className="rounded-2xl border-2 border-brand-muted bg-brand-light/30 p-4"
               >
-                <p className="text-xs font-bold text-gray-500 mb-2">
+                <p className="text-sm font-bold text-gray-500 mb-2">
                   Week of {formatShortDate(week.week_start)}
                 </p>
-                <p className="text-sm text-gray-800 font-medium leading-6">
+                <p className="text-base text-gray-800 font-medium leading-6">
                   {week.feedback_json?.summary || "No summary available."}
                 </p>
               </div>
@@ -441,13 +441,13 @@ function StatCard({
     <div className="rounded-3xl border-2 border-brand-muted bg-white p-5 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-bold text-gray-400 uppercase tracking-wide">
+          <p className="text-sm font-bold text-gray-400 uppercase tracking-wide">
             {title}
           </p>
-          <p className="mt-2 text-3xl font-extrabold text-gray-900 leading-none">
+          <p className="mt-2 text-4xl font-extrabold text-gray-900 leading-none">
             {value}
           </p>
-          <p className="mt-2 text-xs text-gray-500 font-medium">{subtitle}</p>
+          <p className="mt-2 text-sm text-gray-500 font-medium">{subtitle}</p>
         </div>
 
         <div
@@ -474,12 +474,12 @@ function InfoTile({
     <div className="rounded-3xl border-2 border-brand-muted bg-brand-light/30 p-5">
       <div className="flex items-center gap-2 text-brand-primary mb-3">
         {icon}
-        <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">
+        <p className="text-sm font-bold text-gray-500 uppercase tracking-wide">
           {label}
         </p>
       </div>
 
-      <p className="text-sm font-semibold text-gray-800 leading-7 whitespace-pre-line">
+      <p className="text-base font-semibold text-gray-800 leading-7 whitespace-pre-line">
         {value || "—"}
       </p>
     </div>
@@ -511,16 +511,16 @@ function AccordionCard({
           </div>
 
           <div>
-            <h2 className="text-lg font-extrabold text-gray-900">{title}</h2>
+            <h2 className="text-xl font-extrabold text-gray-900">{title}</h2>
             {subtitle && (
-              <p className="text-sm text-gray-500 font-medium mt-1">
+              <p className="text-base text-gray-500 font-medium mt-1">
                 {subtitle}
               </p>
             )}
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-sm font-bold text-gray-500">
+        <div className="flex items-center gap-2 text-base font-bold text-gray-500">
           <span className="group-open:hidden">Open</span>
           <span className="hidden group-open:inline">Close</span>
           <ChevronDown className="transition-transform group-open:rotate-180" size={18} />
@@ -534,7 +534,7 @@ function AccordionCard({
 
 function EmptyState({ label }: { label: string }) {
   return (
-    <div className="min-h-45 flex items-center justify-center rounded-3xl border-2 border-dashed border-brand-muted bg-brand-light/20 text-gray-500 text-sm font-semibold text-center px-6 py-8">
+    <div className="min-h-45 flex items-center justify-center rounded-3xl border-2 border-dashed border-brand-muted bg-brand-light/20 text-gray-500 text-base font-semibold text-center px-6 py-8">
       {label}
     </div>
   );
@@ -567,14 +567,14 @@ function WeeklyList({
           <div key={index} className="flex gap-3">
             <div
               className={
-                "mt-0.5 h-7 w-7 rounded-full bg-white flex items-center justify-center shrink-0 text-xs font-extrabold " +
+                "mt-0.5 h-7 w-7 rounded-full bg-white flex items-center justify-center shrink-0 text-sm font-extrabold " +
                 (tone === "green" ? "text-green-700" : "text-yellow-700")
               }
             >
               {index + 1}
             </div>
 
-            <p className="text-sm text-gray-800 font-medium leading-7">
+            <p className="text-base text-gray-800 font-medium leading-7">
               {item}
             </p>
           </div>

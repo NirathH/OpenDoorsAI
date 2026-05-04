@@ -39,7 +39,7 @@ export default function ActionCircle({
       <Icon size={iconSize} strokeWidth={2.5} />
       <span
         className={
-          size === "lg" ? "font-bold text-lg" : "font-semibold text-sm"
+          size === "lg" ? "font-bold text-xl" : "font-semibold text-base"
         }
       >
         {label}

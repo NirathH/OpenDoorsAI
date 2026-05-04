@@ -34,12 +34,12 @@ export default async function ParticipantDashboardPage() {
             <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-brand-light border-2 border-brand-muted opacity-50" />
 
             <div className="relative w-36 h-36 rounded-full border-[6px] border-brand-primary overflow-hidden mb-6 shadow-lg bg-brand-light flex items-center justify-center">
-              <span className="text-brand-primary font-extrabold text-5xl">
+              <span className="text-brand-primary font-extrabold text-6xl">
                 {participantName.charAt(0).toUpperCase()}
               </span>
             </div>
 
-            <h1 className="relative text-3xl font-semibold text-gray-900 mb-2">
+            <h1 className="relative text-4xl font-semibold text-gray-900 mb-2">
               Welcome back, {participantName}!
             </h1>
 
@@ -123,7 +123,7 @@ export default async function ParticipantDashboardPage() {
                     </Link>
                   ))
                 ) : (
-                  <div className="rounded-2xl border-2 border-dashed border-brand-muted bg-brand-light/30 p-6 text-sm text-gray-500 font-medium">
+                  <div className="rounded-2xl border-2 border-dashed border-brand-muted bg-brand-light/30 p-6 text-base text-gray-500 font-medium">
                     No goals assigned yet.
                   </div>
                 )}
@@ -139,10 +139,10 @@ export default async function ParticipantDashboardPage() {
             </div>
 
             <div className="flex flex-col gap-1">
-              <h2 className="text-gray-900 font-semibold text-[17px]">
+              <h2 className="text-gray-900 font-semibold text-[19px]">
                 Coaching Snapshot
               </h2>
-              <p className="text-gray-500 text-[13px] font-medium">
+              <p className="text-gray-500 text-[15px] font-medium">
                 Quick reminders to keep you focused
               </p>
             </div>
@@ -173,7 +173,7 @@ function Card({
 }) {
   return (
     <div className="bg-white rounded-4xl p-6 border-2 border-brand-muted flex flex-col">
-      <h2 className="text-[15px] font-medium text-gray-700 mb-4 px-2">
+      <h2 className="text-[17px] font-medium text-gray-700 mb-4 px-2">
         {title}
       </h2>
       {children}
@@ -196,10 +196,10 @@ function MiniStat({
         {icon}
       </div>
       <div>
-        <div className="text-xs text-gray-600 font-semibold mb-1">
+        <div className="text-sm text-gray-600 font-semibold mb-1">
           {label}
         </div>
-        <div className="text-3xl font-bold text-gray-900 leading-none">
+        <div className="text-4xl font-bold text-gray-900 leading-none">
           {value}
         </div>
       </div>
@@ -209,7 +209,7 @@ function MiniStat({
 
 function Pill({ children }: { children: React.ReactNode }) {
   return (
-    <span className="px-3 py-1.5 rounded-full text-xs font-semibold border-2 border-brand-muted bg-white text-gray-700">
+    <span className="px-3 py-1.5 rounded-full text-sm font-semibold border-2 border-brand-muted bg-white text-gray-700">
       {children}
     </span>
   );
@@ -224,8 +224,8 @@ function SidebarNote({
 }) {
   return (
     <div className="rounded-2xl border-2 border-brand-muted bg-brand-light/40 p-4">
-      <div className="text-xs font-semibold text-gray-500 mb-1">{title}</div>
-      <div className="text-sm text-gray-800 font-medium leading-6">{text}</div>
+      <div className="text-sm font-semibold text-gray-500 mb-1">{title}</div>
+      <div className="text-base text-gray-800 font-medium leading-6">{text}</div>
     </div>
   );
 }
