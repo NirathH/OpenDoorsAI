@@ -30,7 +30,7 @@ import {
   Legend,
 } from "recharts";
 
-// ─── Color palette used across all charts ────────────────────────────────────
+// ─── Color palette ────────────────────────────────────────────────────────────
 const COLORS = {
   teal: "#0d9488",
   sky: "#38bdf8",
@@ -83,7 +83,10 @@ function formatChartDate(dateString: string) {
   });
 }
 
-function downloadCsv(filename: string, rows: Record<string, string | number>[]) {
+function downloadCsv(
+  filename: string,
+  rows: Record<string, string | number>[]
+) {
   if (!rows.length) return;
 
   const headers = Object.keys(rows[0]);
@@ -101,14 +104,12 @@ function downloadCsv(filename: string, rows: Record<string, string | number>[]) 
 
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
-
   const link = document.createElement("a");
   link.href = url;
   link.setAttribute("download", filename);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-
   URL.revokeObjectURL(url);
 }
 
@@ -117,13 +118,11 @@ async function downloadElementAsPng(
   filename: string
 ) {
   if (!element) return;
-
   const dataUrl = await toPng(element, {
     cacheBust: true,
     pixelRatio: 2,
     backgroundColor: "#ffffff",
   });
-
   const link = document.createElement("a");
   link.download = filename;
   link.href = dataUrl;
@@ -143,7 +142,7 @@ const tooltipStyle = {
   cursor: { fill: "rgba(13,148,136,0.06)" },
 };
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── StatCard ─────────────────────────────────────────────────────────────────
 
 function StatCard({
   title,
@@ -159,25 +158,29 @@ function StatCard({
   accent?: string;
 }) {
   return (
-    <div className="rounded-2xl border-2 border-brand-muted bg-white p-5 shadow-sm flex items-start gap-4">
+    <div className="rounded-2xl border-2 border-brand-muted bg-white p-4 shadow-sm flex flex-col gap-3 h-full">
       <div
-        className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0"
+        className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
         style={{ background: `${accent}18`, color: accent }}
       >
         {icon}
       </div>
-      <div className="min-w-0">
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+      <div>
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide leading-none mb-1.5">
           {title}
         </p>
-        <p className="mt-1 text-2xl font-extrabold text-gray-900 leading-none">
+        <p className="text-2xl font-extrabold text-gray-900 leading-none mb-1">
           {value}
         </p>
-        <p className="mt-1 text-xs text-gray-400 font-medium">{subtitle}</p>
+        <p className="text-xs text-gray-400 font-medium leading-tight">
+          {subtitle}
+        </p>
       </div>
     </div>
   );
 }
+
+// ─── ChartCard ────────────────────────────────────────────────────────────────
 
 function ChartCard({
   title,
@@ -216,7 +219,6 @@ function ChartCard({
                 PNG
               </button>
             )}
-
             {onExportCsv && (
               <button
                 type="button"
@@ -236,10 +238,37 @@ function ChartCard({
   );
 }
 
+// ─── EmptyState ───────────────────────────────────────────────────────────────
+
 function EmptyState({ label }: { label: string }) {
   return (
     <div className="h-[260px] flex items-center justify-center rounded-2xl border-2 border-dashed border-brand-muted bg-brand-light/20 text-gray-400 text-sm font-semibold">
       {label}
+    </div>
+  );
+}
+
+// ─── MiniInsight ──────────────────────────────────────────────────────────────
+
+function MiniInsight({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-xl border-2 border-brand-muted bg-brand-light/20 p-3">
+      <div
+        className="flex items-center gap-1.5 mb-1"
+        style={{ color: COLORS.teal }}
+      >
+        {icon}
+      </div>
+      <p className="text-xs text-gray-400 font-semibold">{label}</p>
+      <p className="text-sm font-bold text-gray-900 mt-0.5 truncate">{value}</p>
     </div>
   );
 }
@@ -304,48 +333,49 @@ export default function InstructorAnalyticsDashboard({ analytics }: Props) {
 
   return (
     <div className="space-y-6">
+
       {/* ── Stat row ── */}
-      <section className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+      <section className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 items-stretch">
         <StatCard
           title="Students"
           value={analytics.totalStudents}
           subtitle="Assigned to you"
-          icon={<Users size={20} />}
+          icon={<Users size={18} />}
           accent={COLORS.teal}
         />
         <StatCard
           title="Assignments"
           value={analytics.totalAssignments}
-          subtitle="Total sessions assigned"
-          icon={<ClipboardList size={20} />}
+          subtitle="Total assigned"
+          icon={<ClipboardList size={18} />}
           accent={COLORS.sky}
         />
         <StatCard
           title="Completed"
           value={analytics.completedSessions}
           subtitle="Finished sessions"
-          icon={<CheckCircle2 size={20} />}
+          icon={<CheckCircle2 size={18} />}
           accent={COLORS.teal}
         />
         <StatCard
           title="Pending"
           value={analytics.pendingAssignments}
           subtitle="Awaiting completion"
-          icon={<Clock3 size={20} />}
+          icon={<Clock3 size={18} />}
           accent={COLORS.amber}
         />
         <StatCard
           title="Completion Rate"
           value={`${analytics.completionRate}%`}
-          subtitle="Assigned vs completed"
-          icon={<TrendingUp size={20} />}
+          subtitle="vs completed"
+          icon={<TrendingUp size={18} />}
           accent={COLORS.teal}
         />
         <StatCard
           title="Avg Duration"
           value={analytics.averageSessionDurationLabel}
-          subtitle="Per completed session"
-          icon={<TimerReset size={20} />}
+          subtitle="Per session"
+          icon={<TimerReset size={18} />}
           accent={COLORS.sky}
         />
       </section>
@@ -700,7 +730,8 @@ export default function InstructorAnalyticsDashboard({ analytics }: Props) {
               <span className="font-bold text-gray-900">
                 {analytics.totalStudents}
               </span>{" "}
-              student{analytics.totalStudents === 1 ? "" : "s"} and have assigned{" "}
+              student{analytics.totalStudents === 1 ? "" : "s"} and have
+              assigned{" "}
               <span className="font-bold text-gray-900">
                 {analytics.totalAssignments}
               </span>{" "}
@@ -717,29 +748,7 @@ export default function InstructorAnalyticsDashboard({ analytics }: Props) {
           </div>
         </ChartCard>
       </section>
-    </div>
-  );
-}
 
-function MiniInsight({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-xl border-2 border-brand-muted bg-brand-light/20 p-3">
-      <div
-        className="flex items-center gap-1.5 mb-1"
-        style={{ color: COLORS.teal }}
-      >
-        {icon}
-      </div>
-      <p className="text-xs text-gray-400 font-semibold">{label}</p>
-      <p className="text-sm font-bold text-gray-900 mt-0.5 truncate">{value}</p>
     </div>
   );
 }

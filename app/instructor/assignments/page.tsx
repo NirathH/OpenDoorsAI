@@ -10,347 +10,412 @@ import {
   Pencil,
   Trash2,
   Plus,
-  Filter,
   CalendarDays,
   User,
-  Target,
+  Eye,
 } from "lucide-react";
 import InstructorSidebar from "@/components/InstructorSidebar";
 import { requireInstructor } from "@/lib/server/auth/requireInstructor";
 import {
   getInstructorAssignments,
-  type AssignmentStatusFilter,
 } from "@/lib/server/instructor/getInstructorAssignments";
 import { formatShortDate } from "@/lib/utils/studentHelpers";
 
 type PageProps = {
   searchParams: Promise<{
-    status?: string;
+    active_filter?: string;
+    completed_filter?: string;
   }>;
 };
 
-function getStatusStyles(status: string) {
-  if (status === "completed") {
-    return "bg-green-50 text-green-700 border-green-200";
-  }
+type ActiveFilter = "all" | "assigned" | "in_progress" | "overdue";
+type CompletedFilter = "this_week" | "this_month" | "all_time";
 
-  if (status === "in_progress") {
-    return "bg-yellow-50 text-yellow-700 border-yellow-200";
-  }
-
-  if (status === "overdue") {
-    return "bg-red-50 text-red-700 border-red-200";
-  }
-
-  return "bg-brand-light text-brand-primary border-brand-muted";
-}
-
-function getFilterHref(status: AssignmentStatusFilter) {
-  if (status === "all") return "/instructor/assignments";
-  return `/instructor/assignments?status=${status}`;
+function getActiveBadgeStyles(status: string) {
+  if (status === "in_progress")
+    return "bg-yellow-50 text-yellow-700 border border-yellow-200";
+  if (status === "overdue")
+    return "bg-red-50 text-red-700 border border-red-200";
+  return "bg-brand-light text-brand-primary border border-brand-muted";
 }
 
 export default async function InstructorAssignmentsPage({
   searchParams,
 }: PageProps) {
-  const { status } = await searchParams;
+  const { active_filter, completed_filter } = await searchParams;
 
-  const selectedFilter: AssignmentStatusFilter =
-    status === "assigned" ||
-    status === "in_progress" ||
-    status === "completed" ||
-    status === "overdue"
-      ? status
+  const activeFilter: ActiveFilter =
+    active_filter === "assigned" ||
+    active_filter === "in_progress" ||
+    active_filter === "overdue"
+      ? active_filter
       : "all";
+
+  const completedFilter: CompletedFilter =
+    completed_filter === "this_month" || completed_filter === "all_time"
+      ? completed_filter
+      : "this_week";
 
   const { supabase, instructorId, instructorName } = await requireInstructor();
 
-  const { historyRows, stats } = await getInstructorAssignments(
+  const { historyRows: allRows, stats } = await getInstructorAssignments(
     supabase,
     instructorId,
-    selectedFilter
+    "all"
   );
 
-  const filters: { label: string; value: AssignmentStatusFilter }[] = [
+  const activeRows = allRows.filter((r) => r.effective_status !== "completed");
+  const completedRows = allRows.filter(
+    (r) => r.effective_status === "completed"
+  );
+
+  const filteredActiveRows =
+    activeFilter === "all"
+      ? activeRows
+      : activeRows.filter((r) => r.effective_status === activeFilter);
+
+  // Wire up date filtering here when ready
+  const filteredCompletedRows = completedRows;
+
+  const activeFilters: { label: string; value: ActiveFilter }[] = [
     { label: "All", value: "all" },
     { label: "Assigned", value: "assigned" },
-    { label: "In Progress", value: "in_progress" },
-    { label: "Completed", value: "completed" },
+    { label: "In progress", value: "in_progress" },
     { label: "Overdue", value: "overdue" },
   ];
+
+  const completedFilters: { label: string; value: CompletedFilter }[] = [
+    { label: "This week", value: "this_week" },
+    { label: "This month", value: "this_month" },
+    { label: "All time", value: "all_time" },
+  ];
+
+  function activeFilterHref(a: ActiveFilter) {
+    const p = new URLSearchParams();
+    if (a !== "all") p.set("active_filter", a);
+    if (completedFilter !== "this_week") p.set("completed_filter", completedFilter);
+    const qs = p.toString();
+    return `/instructor/assignments${qs ? `?${qs}` : ""}`;
+  }
+
+  function completedFilterHref(c: CompletedFilter) {
+    const p = new URLSearchParams();
+    if (activeFilter !== "all") p.set("active_filter", activeFilter);
+    if (c !== "this_week") p.set("completed_filter", c);
+    const qs = p.toString();
+    return `/instructor/assignments${qs ? `?${qs}` : ""}`;
+  }
 
   return (
     <div className="min-h-screen bg-brand-light font-sans flex">
       <InstructorSidebar name={instructorName} />
 
-      <main className="flex-1 min-w-0 p-6 md:p-8">
-        <div className="max-w-[1180px] mx-auto">
-          <section className="rounded-[2rem] border-2 border-brand-muted bg-white p-6 md:p-8 shadow-sm mb-8">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-light border border-brand-muted text-brand-primary text-sm font-bold mb-4">
-                  <ClipboardList size={16} />
-                  Instructor Workspace
-                </div>
+      <main className="flex-1 min-w-0 p-6 md:p-8 flex flex-col gap-6">
+        <div className="max-w-[1280px] mx-auto w-full flex flex-col gap-6">
 
-                <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-                  Session Assignments
-                </h1>
-
-                <p className="mt-3 text-gray-600 font-medium max-w-2xl leading-relaxed">
-                  Create, track, and manage student practice assignments in one
-                  clean place.
-                </p>
+          {/* ── Header ── */}
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-brand-muted text-brand-primary text-xs font-bold mb-3">
+                <ClipboardList size={13} />
+                Instructor Workspace
               </div>
-
-              <Link
-                href="/instructor/assignments/new"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-secondary hover:bg-brand-primary text-white font-extrabold px-6 py-4 shadow-md transition-colors"
-              >
-                <Plus size={19} />
-                Assign Session
-              </Link>
+              <h1 className="text-2xl font-extrabold text-gray-900">
+                Session Assignments
+              </h1>
+              <p className="text-sm text-gray-500 font-medium mt-1">
+                Create, track, and manage student practice assignments.
+              </p>
             </div>
-          </section>
+            <Link
+              href="/instructor/assignments/new"
+              className="inline-flex items-center gap-2 bg-brand-secondary hover:bg-brand-primary text-white text-sm font-bold px-5 py-2.5 rounded-xl shadow-sm transition-colors whitespace-nowrap"
+            >
+              <Plus size={15} />
+              Assign Session
+            </Link>
+          </div>
 
-          <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
-            <StatCard
-              icon={<ClipboardList size={20} />}
+          {/* ── Stats ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <StatTile
+              icon={<ClipboardList size={16} />}
+              dotColor="bg-brand-primary"
               label="Assigned"
-              value={String(stats.assigned)}
-              description="Waiting to be started"
+              value={stats.assigned}
+              sub="Waiting to start"
             />
-            <StatCard
-              icon={<Clock3 size={20} />}
-              label="In Progress"
-              value={String(stats.inProgress)}
-              description="Currently active"
+            <StatTile
+              icon={<Clock3 size={16} />}
+              dotColor="bg-yellow-400"
+              label="In progress"
+              value={stats.inProgress}
+              sub="Currently active"
             />
-            <StatCard
-              icon={<CheckCircle2 size={20} />}
-              label="Completed"
-              value={String(stats.completed)}
-              description="Finished sessions"
-            />
-            <StatCard
-              icon={<AlertTriangle size={20} />}
+            <StatTile
+              icon={<AlertTriangle size={16} />}
+              dotColor="bg-red-400"
               label="Overdue"
-              value={String(stats.overdue)}
-              description="Needs attention"
+              value={stats.overdue}
+              sub="Needs attention"
             />
-          </section>
+            <StatTile
+              icon={<CheckCircle2 size={16} />}
+              dotColor="bg-green-500"
+              label="Completed"
+              value={stats.completed}
+              sub="Finished sessions"
+            />
+          </div>
 
-          <section className="bg-white rounded-[2rem] border-2 border-brand-muted shadow-sm overflow-hidden">
-            <div className="p-5 md:p-6 border-b-2 border-brand-muted bg-white">
-              <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5">
-                <div>
-                  <div className="flex items-center gap-3">
-                    <div className="h-11 w-11 rounded-2xl bg-brand-light border-2 border-brand-muted flex items-center justify-center text-brand-primary">
-                      <Filter size={20} />
-                    </div>
+          {/* ── Two panels ── */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
 
-                    <div>
-                      <h2 className="text-xl md:text-2xl font-extrabold text-gray-900">
-                        Assignment History
-                      </h2>
-                      <p className="text-sm text-gray-500 font-medium mt-1">
-                        Showing {historyRows.length} assignment
-                        {historyRows.length === 1 ? "" : "s"}
-                      </p>
-                    </div>
-                  </div>
+            {/* Active */}
+            <div className="bg-white border-2 border-brand-muted rounded-2xl overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between gap-3 px-5 py-4 border-b-2 border-brand-muted">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-extrabold text-gray-900">
+                    Active
+                  </span>
+                  <span className="text-xs font-bold text-brand-primary bg-brand-light border border-brand-muted rounded-full px-2 py-0.5">
+                    {activeRows.length}
+                  </span>
                 </div>
-
-                <div className="flex flex-wrap gap-2">
-                  {filters.map((filter) => {
-                    const active = selectedFilter === filter.value;
-
-                    return (
-                      <Link
-                        key={filter.value}
-                        href={getFilterHref(filter.value)}
-                        className={
-                          "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-bold border-2 transition-colors " +
-                          (active
-                            ? "bg-brand-secondary border-brand-secondary text-white"
-                            : "bg-white border-brand-muted text-gray-700 hover:border-brand-primary hover:text-brand-primary")
-                        }
-                      >
-                        {filter.label}
-                      </Link>
-                    );
-                  })}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {activeFilters.map((f) => (
+                    <Link
+                      key={f.value}
+                      href={activeFilterHref(f.value)}
+                      className={
+                        "text-xs px-3 py-1.5 rounded-xl border-2 transition-colors font-bold " +
+                        (activeFilter === f.value
+                          ? "bg-brand-secondary border-brand-secondary text-white"
+                          : "bg-white border-brand-muted text-gray-600 hover:border-brand-primary hover:text-brand-primary")
+                      }
+                    >
+                      {f.label}
+                    </Link>
+                  ))}
                 </div>
+              </div>
+
+              <div className="flex-1 overflow-y-auto divide-y divide-brand-muted/50">
+                {filteredActiveRows.length === 0 ? (
+                  <EmptyState text="No active assignments for this filter." />
+                ) : (
+                  filteredActiveRows.map((item) => (
+                    <AssignmentRow
+                      key={item.id}
+                      item={item}
+                      variant="active"
+                      badgeStyles={getActiveBadgeStyles(item.effective_status)}
+                    />
+                  ))
+                )}
               </div>
             </div>
 
-            {historyRows.length === 0 ? (
-              <div className="p-8">
-                <EmptyState text="No assignments found for this filter." />
+            {/* Completed */}
+            <div className="bg-white border-2 border-brand-muted rounded-2xl overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between gap-3 px-5 py-4 border-b-2 border-brand-muted">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-extrabold text-gray-900">
+                    Completed
+                  </span>
+                  <span className="text-xs font-bold text-brand-primary bg-brand-light border border-brand-muted rounded-full px-2 py-0.5">
+                    {completedRows.length}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {completedFilters.map((f) => (
+                    <Link
+                      key={f.value}
+                      href={completedFilterHref(f.value)}
+                      className={
+                        "text-xs px-3 py-1.5 rounded-xl border-2 transition-colors font-bold " +
+                        (completedFilter === f.value
+                          ? "bg-brand-secondary border-brand-secondary text-white"
+                          : "bg-white border-brand-muted text-gray-600 hover:border-brand-primary hover:text-brand-primary")
+                      }
+                    >
+                      {f.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            ) : (
-              <div className="p-4 md:p-6 space-y-4">
-                {historyRows.map((item) => (
-                  <article
-                    key={item.id}
-                    className="rounded-3xl border-2 border-brand-muted bg-brand-light/30 p-5 md:p-6 hover:bg-white transition-colors"
-                  >
-                    <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-5">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-start gap-3 mb-3">
-                          <div className="h-11 w-11 rounded-2xl bg-white border-2 border-brand-muted flex items-center justify-center text-brand-primary shrink-0">
-                            <Target size={20} />
-                          </div>
 
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-lg md:text-xl font-extrabold text-gray-900 break-words">
-                                {item.title}
-                              </h3>
-                              <StatusPill status={item.effective_status} />
-                            </div>
-
-                            <div className="mt-2 inline-flex items-center gap-2 text-sm text-gray-600 font-semibold">
-                              <User size={15} className="text-brand-primary" />
-                              {item.participant_name}
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          <Pill
-                            icon={<CalendarDays size={14} />}
-                            text={`Assigned ${formatShortDate(
-                              item.created_at
-                            )}`}
-                          />
-                          <Pill
-                            icon={<Clock3 size={14} />}
-                            text={`Due ${
-                              item.due_at
-                                ? formatShortDate(item.due_at)
-                                : "No due date"
-                            }`}
-                          />
-                          {item.latest_activity_at && (
-                            <Pill
-                              icon={<CheckCircle2 size={14} />}
-                              text={`Latest ${formatShortDate(
-                                item.latest_activity_at
-                              )}`}
-                            />
-                          )}
-                        </div>
-
-                        {item.goal && (
-                          <div className="mt-5 rounded-2xl border-2 border-brand-muted bg-white p-4">
-                            <div className="text-xs font-extrabold text-gray-500 uppercase mb-2">
-                              Goal
-                            </div>
-                            <p className="text-sm text-gray-700 font-medium leading-6">
-                              {item.goal}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-wrap xl:flex-col gap-2 xl:min-w-[140px]">
-                        <Link
-                          href={`/instructor/assignments/${item.id}/edit`}
-                          className="inline-flex items-center justify-center gap-2 rounded-xl border-2 border-brand-muted bg-white px-4 py-2.5 text-sm font-bold text-gray-800 hover:border-brand-primary hover:text-brand-primary transition-colors"
-                        >
-                          <Pencil size={16} />
-                          Edit
-                        </Link>
-
-                        <form
-                          action={`/api/instructor/assignments/${item.id}`}
-                          method="POST"
-                        >
-                          <input type="hidden" name="_intent" value="delete" />
-                          <button
-                            type="submit"
-                            className="w-full inline-flex items-center justify-center gap-2 rounded-xl border-2 border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 hover:bg-red-50 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                            Delete
-                          </button>
-                        </form>
-                      </div>
-                    </div>
-                  </article>
-                ))}
+              <div className="flex-1 overflow-y-auto divide-y divide-brand-muted/50">
+                {filteredCompletedRows.length === 0 ? (
+                  <EmptyState text="No completed assignments yet." />
+                ) : (
+                  filteredCompletedRows.map((item) => (
+                    <AssignmentRow
+                      key={item.id}
+                      item={item}
+                      variant="completed"
+                      badgeStyles="bg-green-50 text-green-700 border border-green-200"
+                    />
+                  ))
+                )}
               </div>
-            )}
-          </section>
+            </div>
+
+          </div>
         </div>
       </main>
     </div>
   );
 }
 
-function StatCard({
+// ─── StatTile ─────────────────────────────────────────────────────────────────
+
+function StatTile({
   icon,
+  dotColor,
   label,
   value,
-  description,
+  sub,
 }: {
   icon: React.ReactNode;
+  dotColor: string;
   label: string;
-  value: string;
-  description: string;
+  value: number;
+  sub: string;
 }) {
   return (
-    <div className="rounded-3xl border-2 border-brand-muted bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
+    <div className="bg-white border-2 border-brand-muted rounded-2xl px-4 py-4">
+      <div className="flex items-start justify-between gap-2 mb-3">
         <div>
-          <p className="text-sm font-extrabold text-gray-900">{label}</p>
-          <p className="mt-1 text-xs font-semibold text-gray-500">
-            {description}
-          </p>
-          <p className="mt-4 text-3xl font-extrabold text-gray-900">{value}</p>
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />
+            <span className="text-xs font-extrabold text-gray-900">{label}</span>
+          </div>
+          <p className="text-xs text-gray-400 font-medium">{sub}</p>
         </div>
-
-        <div className="h-11 w-11 rounded-2xl bg-brand-light border-2 border-brand-muted flex items-center justify-center text-brand-primary shrink-0">
+        <div className="h-8 w-8 rounded-xl bg-brand-light border border-brand-muted flex items-center justify-center text-brand-primary flex-shrink-0">
           {icon}
         </div>
+      </div>
+      <p className="text-3xl font-extrabold text-gray-900">{value}</p>
+    </div>
+  );
+}
+
+// ─── AssignmentRow ────────────────────────────────────────────────────────────
+
+function AssignmentRow({
+  item,
+  variant,
+  badgeStyles,
+}: {
+  item: {
+    id: string;
+    title: string;
+    effective_status: string;
+    participant_name: string;
+    created_at: string;
+    due_at: string | null;
+    latest_activity_at: string | null;
+    goal: string | null;
+  };
+  variant: "active" | "completed";
+  badgeStyles: string;
+}) {
+  return (
+    <div className="flex items-start gap-3 px-5 py-4 hover:bg-brand-light/40 transition-colors">
+      <div className="flex-1 min-w-0">
+
+        {/* Title + badge */}
+        <div className="flex items-center gap-2 flex-wrap mb-1.5">
+          <span className="text-sm font-extrabold text-gray-900 truncate">
+            {item.title}
+          </span>
+          <span
+            className={`inline-flex text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${badgeStyles}`}
+          >
+            {item.effective_status.replaceAll("_", " ")}
+          </span>
+        </div>
+
+        {/* Meta */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="inline-flex items-center gap-1 text-xs text-gray-500 font-semibold">
+            <User size={11} className="text-brand-primary" />
+            {item.participant_name}
+          </span>
+          <span className="inline-flex items-center gap-1 text-xs text-gray-400 font-medium">
+            <CalendarDays size={11} />
+            {item.due_at
+              ? `Due ${formatShortDate(item.due_at)}`
+              : "No due date"}
+          </span>
+          {variant === "completed" && item.latest_activity_at && (
+            <span className="text-xs text-green-600 font-bold">
+              Done {formatShortDate(item.latest_activity_at)}
+            </span>
+          )}
+          {variant === "active" && item.effective_status === "overdue" && (
+            <span className="text-xs text-red-500 font-bold">Past due</span>
+          )}
+        </div>
+
+        {/* Goal */}
+        {item.goal && (
+          <p className="mt-2 text-xs text-gray-400 font-medium leading-relaxed border-l-2 border-brand-muted pl-2.5">
+            {item.goal}
+          </p>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1.5 flex-shrink-0 pt-0.5">
+        {variant === "active" ? (
+          <>
+            <Link
+              href={`/instructor/assignments/${item.id}/edit`}
+              className="inline-flex items-center gap-1 text-xs font-bold text-gray-600 hover:text-brand-primary border-2 border-brand-muted hover:border-brand-primary bg-white rounded-xl px-3 py-1.5 transition-colors"
+            >
+              <Pencil size={11} />
+              Edit
+            </Link>
+            <form
+              action={`/api/instructor/assignments/${item.id}`}
+              method="POST"
+            >
+              <input type="hidden" name="_intent" value="delete" />
+              <button
+                type="submit"
+                className="inline-flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 border-2 border-red-100 hover:border-red-300 bg-white rounded-xl px-3 py-1.5 transition-colors"
+              >
+                <Trash2 size={11} />
+                Del
+              </button>
+            </form>
+          </>
+        ) : (
+          <Link
+            href={`/instructor/assignments/${item.id}`}
+            className="inline-flex items-center gap-1 text-xs font-bold text-gray-600 hover:text-brand-primary border-2 border-brand-muted hover:border-brand-primary bg-white rounded-xl px-3 py-1.5 transition-colors"
+          >
+            <Eye size={11} />
+            View
+          </Link>
+        )}
       </div>
     </div>
   );
 }
 
-function Pill({
-  icon,
-  text,
-}: {
-  icon?: React.ReactNode;
-  text: string;
-}) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold border-2 border-brand-muted bg-white text-gray-700">
-      {icon}
-      {text}
-    </span>
-  );
-}
-
-function StatusPill({ status }: { status: string }) {
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-3 py-1.5 text-xs font-extrabold border ${getStatusStyles(
-        status
-      )}`}
-    >
-      {status.replaceAll("_", " ")}
-    </span>
-  );
-}
+// ─── EmptyState ───────────────────────────────────────────────────────────────
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="rounded-3xl border-2 border-dashed border-brand-muted bg-brand-light/30 p-10 text-center">
-      <ClipboardList className="mx-auto text-brand-primary mb-3" size={32} />
-      <p className="text-gray-600 font-semibold">{text}</p>
+    <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
+      <div className="h-12 w-12 rounded-2xl bg-brand-light border-2 border-brand-muted flex items-center justify-center text-brand-primary mb-3">
+        <ClipboardList size={22} />
+      </div>
+      <p className="text-sm text-gray-500 font-semibold">{text}</p>
     </div>
   );
 }
